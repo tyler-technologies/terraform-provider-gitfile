@@ -11,18 +11,18 @@ const CommitBodyHeader string = "The following files are managed by terraform:"
 func commitResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
-			"commit_message": &schema.Schema{
+			"commit_message": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "Created by terraform gitfile_commit",
 				ForceNew: true,
 			},
-			"checkout_dir": &schema.Schema{
+			"checkout_dir": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
-			"handle": &schema.Schema{
+			"handle": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,

@@ -9,17 +9,17 @@ import (
 func symlinkResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
-			"checkout_dir": &schema.Schema{
+			"checkout_dir": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
-			"path": &schema.Schema{
+			"path": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
-			"target": &schema.Schema{
+			"target": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,

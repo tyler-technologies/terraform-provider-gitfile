@@ -12,7 +12,7 @@ import (
 func checkoutResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
-			"path": &schema.Schema{
+			"path": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
@@ -25,18 +25,18 @@ func checkoutResource() *schema.Resource {
 					return
 				},
 			},
-			"repo": &schema.Schema{
+			"repo": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
-			"branch": &schema.Schema{
+			"branch": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "master",
 				ForceNew: true, // FIXME
 			},
-			"head": &schema.Schema{
+			"head": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
