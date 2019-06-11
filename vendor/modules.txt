@@ -6,8 +6,6 @@ cloud.google.com/go/internal/optional
 cloud.google.com/go/internal/trace
 cloud.google.com/go/internal/version
 cloud.google.com/go/compute/metadata
-# github.com/Yelp/terraform-provider-gitfile v0.0.0-20170130171244-c0902796fa74
-github.com/Yelp/terraform-provider-gitfile/gitfile
 # github.com/agext/levenshtein v1.2.2
 github.com/agext/levenshtein
 # github.com/apparentlymart/go-cidr v1.0.0
@@ -122,6 +120,7 @@ github.com/hashicorp/hil/scanner
 # github.com/hashicorp/terraform v0.12.1
 github.com/hashicorp/terraform/plugin
 github.com/hashicorp/terraform/helper/hashcode
+github.com/hashicorp/terraform/helper/mutexkv
 github.com/hashicorp/terraform/helper/schema
 github.com/hashicorp/terraform/terraform
 github.com/hashicorp/terraform/configs/configschema
