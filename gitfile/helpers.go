@@ -2,11 +2,12 @@ package gitfile
 
 import (
 	"fmt"
-	"github.com/hashicorp/errwrap"
-	"github.com/hashicorp/terraform/helper/hashcode"
 	"os/exec"
 	"strings"
-	"sync"
+
+	"github.com/hashicorp/errwrap"
+	"github.com/hashicorp/terraform/helper/hashcode"
+	"github.com/hashicorp/terraform/helper/mutexkv"
 )
 
 func gitCommand(checkout_dir string, args ...string) ([]byte, error) {
@@ -46,20 +47,13 @@ func hashString(v interface{}) int {
 	}
 }
 
-// map of checkout_dir to lock. file, commit, and checkout should grab the lock corresponding to a checkout dir
-// around create/read/update/delete operations.
-var checkoutLocks map[string]*sync.Mutex
+// This is a global MutexKV for use within this plugin.
+var gitfileMutexKV = mutexkv.NewMutexKV()
 
 func lockCheckout(checkout_dir string) {
-	if checkoutLocks == nil {
-		checkoutLocks = map[string]*sync.Mutex{}
-	}
-	if checkoutLocks[checkout_dir] == nil {
-		checkoutLocks[checkout_dir] = new(sync.Mutex)
-	}
-	checkoutLocks[checkout_dir].Lock()
+	gitfileMutexKV.Lock(checkout_dir)
 }
 
 func unlockCheckout(checkout_dir string) {
-	checkoutLocks[checkout_dir].Unlock()
+	gitfileMutexKV.Unlock(checkout_dir)
 }
