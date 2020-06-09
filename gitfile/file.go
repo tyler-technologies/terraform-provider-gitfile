@@ -1,10 +1,11 @@
 package gitfile
 
 import (
-	"github.com/hashicorp/terraform/helper/schema"
 	"io/ioutil"
 	"os"
 	"path"
+
+	"github.com/hashicorp/terraform/helper/schema"
 )
 
 func fileResource() *schema.Resource {
@@ -89,5 +90,15 @@ func fileExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 }
 
 func fileDelete(d *schema.ResourceData, meta interface{}) error {
+	checkout_dir := d.Get("checkout_dir").(string)
+	lockCheckout(checkout_dir)
+	defer unlockCheckout(checkout_dir)
+	filepath := d.Get("path").(string)
+	if err := os.Remove(filepath); err != nil {
+		return err
+	}
+	if _, err := gitCommand(checkout_dir, "rm", "--", filepath); err != nil {
+		return err
+	}
 	return nil
 }
