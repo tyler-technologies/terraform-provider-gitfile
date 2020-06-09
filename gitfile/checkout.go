@@ -71,7 +71,7 @@ func CheckoutCreate(d *schema.ResourceData, meta interface{}) error {
 
 	d.Set("head", head)
 	d.SetId(checkout_dir)
-	return nil
+	return CheckoutRead(d, meta)
 }
 
 func CheckoutRead(d *schema.ResourceData, meta interface{}) error {
