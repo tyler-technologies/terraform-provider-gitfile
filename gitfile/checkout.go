@@ -2,11 +2,10 @@ package gitfile
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform/helper/schema"
 	"os"
-	"os/exec"
 	"strings"
-	"syscall"
+
+	"github.com/hashicorp/terraform/helper/schema"
 )
 
 func checkoutResource() *schema.Resource {
@@ -163,25 +162,12 @@ func CheckoutDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("expected head to be %s, was %s", expected_head, head)
 	}
 
-	// more sanity checks
-	if out, err := gitCommand(checkout_dir, "clean", "-dn"); err != nil {
+	if _, err := gitCommand(checkout_dir, flatten("commit", "-m", "Removed by Terraform", "--allow-empty")...); err != nil {
 		return err
-	} else {
-		if out != nil && string(out) != "" {
-			return fmt.Errorf("Refusing to delete checkout %s with untracked files: %s", checkout_dir, string(out))
-		}
 	}
-	if out, err := gitCommand(checkout_dir, "diff-index", "--exit-code", "HEAD"); err != nil {
-		exitErr, isExitErr := err.(*exec.ExitError)
-		if isExitErr {
-			if exitErr.Sys().(syscall.WaitStatus).ExitStatus() != 1 {
-				return err
-			} else {
-				return fmt.Errorf("Refusing to delete dirty checkout %s: %s", checkout_dir, string(out))
-			}
-		} else {
-			return err
-		}
+
+	if _, err := gitCommand(checkout_dir, "push", "origin", "HEAD"); err != nil {
+		return err
 	}
 
 	// actually delete
