@@ -94,7 +94,8 @@ func fileDelete(d *schema.ResourceData, meta interface{}) error {
 	lockCheckout(checkout_dir)
 	defer unlockCheckout(checkout_dir)
 	filepath := d.Get("path").(string)
-	if err := os.Remove(filepath); err != nil {
+	file := path.Join(checkout_dir, filepath)
+	if err := os.Remove(file); err != nil {
 		return err
 	}
 	if _, err := gitCommand(checkout_dir, "rm", "--", filepath); err != nil {
