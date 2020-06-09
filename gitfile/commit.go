@@ -2,8 +2,9 @@ package gitfile
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform/helper/schema"
 	"strings"
+
+	"github.com/hashicorp/terraform/helper/schema"
 )
 
 const CommitBodyHeader string = "The following files are managed by terraform:"
@@ -22,9 +23,10 @@ func commitResource() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
-			"handle": {
-				Type:     schema.TypeString,
+			"handles": {
+				Type:     schema.TypeSet,
 				Required: true,
+				Set:      hashString,
 				ForceNew: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
@@ -43,14 +45,17 @@ func CommitCreate(d *schema.ResourceData, meta interface{}) error {
 	lockCheckout(checkout_dir)
 	defer unlockCheckout(checkout_dir)
 
-	handle := d.Get("handle").(string)
+	handles := d.Get("handles").(*schema.Set)
 	commit_message := d.Get("commit_message").(string)
-	filepath := parseHandle(handle).path
+	filepaths := []string{}
+	for _, handle := range handles.List() {
+		filepaths = append(filepaths, parseHandle(handle.(string)).path)
+	}
 
 	var sha string
 
-	commit_body := fmt.Sprintf("%s\n%s", CommitBodyHeader, filepath)
-	if _, err := gitCommand(checkout_dir, flatten("commit", "-m", commit_message, "-m", commit_body, "--allow-empty", "--", filepath)...); err != nil {
+	commit_body := fmt.Sprintf("%s\n%s", CommitBodyHeader, strings.Join(filepaths, "\n"))
+	if _, err := gitCommand(checkout_dir, flatten("commit", "-m", commit_message, "-m", commit_body, "--allow-empty", "--", filepaths)...); err != nil {
 		return err
 	}
 
