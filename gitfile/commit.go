@@ -71,7 +71,7 @@ func CommitCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	if _, err := gitCommand(checkout_dir, "push", "origin", "HEAD"); err != nil {
+	if err := doGitPush(checkout_dir, 0); err != nil {
 		return err
 	}
 
@@ -107,5 +107,17 @@ func CommitExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 
 func CommitDelete(d *schema.ResourceData, meta interface{}) error {
 	d.SetId("")
+	return nil
+}
+
+func doGitPush(checkout_dir string, count int8) error {
+	if _, err := gitCommand(checkout_dir, "push", "origin", "HEAD"); err != nil {
+		if count >= 10 {
+			return err
+		}
+
+		count++
+		return doGitPush(checkout_dir, count)
+	}
 	return nil
 }
