@@ -55,7 +55,7 @@ func CommitCreate(d *schema.ResourceData, meta interface{}) error {
 	var sha string
 
 	commit_body := fmt.Sprintf("%s\n%s", CommitBodyHeader, strings.Join(filepaths, "\n"))
-	if _, err := gitCommand(checkout_dir, flatten("commit", "-m", commit_message, "-m", commit_body, "--allow-empty", "--", filepaths)...); err != nil {
+	if _, err := gitCommand(checkout_dir, flatten("commit", "-m", commit_message, "-m", commit_body, "--allow-empty")...); err != nil {
 		return err
 	}
 
