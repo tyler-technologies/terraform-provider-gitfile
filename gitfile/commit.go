@@ -54,6 +54,18 @@ func CommitCreate(d *schema.ResourceData, meta interface{}) error {
 
 	var sha string
 
+	if _, err := gitCommand(checkout_dir, "stash"); err != nil {
+		return err
+	}
+
+	if _, err := gitCommand(checkout_dir, "pull"); err != nil {
+		return err
+	}
+
+	if _, err := gitCommand(checkout_dir, "checkout", "stash", "--", "."); err != nil {
+		return err
+	}
+
 	commit_body := fmt.Sprintf("%s\n%s", CommitBodyHeader, strings.Join(filepaths, "\n"))
 	if _, err := gitCommand(checkout_dir, flatten("commit", "-m", commit_message, "-m", commit_body, "--allow-empty")...); err != nil {
 		return err
