@@ -7,7 +7,8 @@ WEBSITE_REPO=github.com/hashicorp/terraform-website
 default: build
 
 build: fmtcheck
-	go install
+	GOOS=darwin GOARCH=amd64 go build -o terraform-provider-gitfile_darwin_amd64
+	GOOS=linux GOARCH=amd64 go build -o terraform-provider-gitfile_linux_amd64
 
 sweep:
 	@echo "WARNING: This will destroy infrastructure. Use only in development accounts."
