@@ -13,4 +13,3 @@ resource "gitfile_commit" "test" {
     commit_message = "Created by terraform gitfile_commit"
     handles = ["${gitfile_file.test.id}"]
 }
-

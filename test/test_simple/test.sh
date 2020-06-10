@@ -12,18 +12,19 @@ cd ..
 terraform init
 terraform apply -auto-approve
 terraform apply -auto-approve
-# gitfile_checkout_path="$(terraform output gitfile_checkout_path)"
-# if [ "$gitfile_checkout_path" != "checkout" ];then
-#     exit 1
-# fi
-# gitfile_commit_commit_message="$(terraform output gitfile_commit_commit_message)"
-# if [ "$gitfile_commit_commit_message" != "Created by terraform gitfile_commit" ];then
-#     exit 1
-# fi
-# gitfile_commit_checkout_dir="$(terraform output gitfile_commit_checkout_dir)"
-# if [ "$gitfile_commit_checkout_dir" != "checkout" ];then
-#     exit 1
-# fi
+
+gitfile_checkout_path="$(terraform output gitfile_checkout_path)"
+if [ "$gitfile_checkout_path" != "checkout" ];then
+    exit 1
+fi
+gitfile_commit_commit_message="$(terraform output gitfile_commit_commit_message)"
+if [ "$gitfile_commit_commit_message" != "Created by terraform gitfile_commit" ];then
+    exit 1
+fi
+gitfile_commit_checkout_dir="$(terraform output gitfile_commit_checkout_dir)"
+if [ "$gitfile_commit_checkout_dir" != "checkout" ];then
+    exit 1
+fi
 
 cd checkout
 git log | grep 'Created by terraform gitfile_commit'

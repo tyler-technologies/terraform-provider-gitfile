@@ -2,7 +2,6 @@ package gitfile
 
 import (
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -74,9 +73,17 @@ func CommitCreate(d *schema.ResourceData, meta interface{}) error {
 
 	var sha string
 
-	stash(checkout_dir)
-	pull(checkout_dir)
-	applyStash(checkout_dir)
+	if err := stash(checkout_dir); err != nil {
+		return err
+	}
+
+	if err := pull(checkout_dir); err != nil {
+		return err
+	}
+
+	if err := applyStash(checkout_dir); err != nil {
+		return err
+	}
 
 	commit_body := fmt.Sprintf("%s\n%s", CommitBodyHeader, strings.Join(filepaths, "\n"))
 	if _, err := gitCommand(checkout_dir, flatten("commit", "-m", commit_message, "-m", commit_body, "--allow-empty")...); err != nil {
@@ -174,18 +181,12 @@ func resetCommit(checkout_dir string) error {
 }
 
 func applyStash(checkout_dir string) error {
-	count, err := gitCommand(checkout_dir, "stash", "list", "|", "wc", "-l")
-	if err != nil {
-		return err
+	if _, err := gitCommand(checkout_dir, "stash", "show", "stash@{0}"); err != nil {
+		return nil
 	}
 
-	// Temporary adding this for debugging in TF call
-	log.Fatalf("Here is the count ---> : %s ", count)
-
-	if string(count) != "0" {
-		if _, err := gitCommand(checkout_dir, "checkout", "stash", "--", "."); err != nil {
-			return err
-		}
+	if _, err := gitCommand(checkout_dir, "checkout", "stash", "--", "."); err != nil {
+		return err
 	}
 	return nil
 }

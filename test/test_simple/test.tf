@@ -20,11 +20,11 @@ resource "gitfile_commit" "test" {
     handles = ["${gitfile_file.test.id}"]
 }
 
-# output "gitfile_commit_commit_message" {
-#     value = "${gitfile_commit.test.commit_message}"
-# }
+output "gitfile_commit_commit_message" {
+    value = "${gitfile_commit.test.commit_message}"
+}
 
-# output "gitfile_commit_checkout_dir" {
-#     value = "${gitfile_commit.test.checkout_dir}"
-# }
+output "gitfile_commit_checkout_dir" {
+    value = "${gitfile_commit.test.checkout_dir}"
+}
 
