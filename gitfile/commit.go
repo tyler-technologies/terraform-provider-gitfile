@@ -122,15 +122,15 @@ func doGitPush(checkout_dir string, count int8) error {
 		count++
 
 		if _, err := gitCommand(checkout_dir, "stash"); err != nil {
-			return errwrap.Wrapf("doGitPush error:", err)
+			return errwrap.Wrapf("doGitPush error: {{err}}", err)
 		}
 
 		if _, err := gitCommand(checkout_dir, "pull"); err != nil {
-			return errwrap.Wrapf("doGitPush error:", err)
+			return errwrap.Wrapf("doGitPush error: {{err}}", err)
 		}
 
 		if _, err := gitCommand(checkout_dir, "checkout", "stash", "--", "."); err != nil {
-			return errwrap.Wrapf("doGitPush error:", err)
+			return errwrap.Wrapf("doGitPush error: {{err}}", err)
 		}
 		return doGitPush(checkout_dir, count)
 	}
