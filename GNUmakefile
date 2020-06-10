@@ -1,70 +1,30 @@
-SWEEP?=us-east-1,us-west-2
-TEST?=./...
-GOFMT_FILES?=$$(find . -name '*.go' |grep -v vendor)
-PKG_NAME=gitfile
-WEBSITE_REPO=github.com/hashicorp/terraform-website
+GOPATH := $(shell go env | grep GOPATH | sed 's/GOPATH="\(.*\)"/\1/')
+PATH := $(GOPATH)/bin:$(PATH)
+export $(PATH)
+GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 
-default: build
 
-build: fmtcheck
-	GOOS=darwin GOARCH=amd64 go build -o terraform-provider-gitfile_darwin_amd64
-	GOOS=linux GOARCH=amd64 go build -o terraform-provider-gitfile_linux_amd64
+help:
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-sweep:
-	@echo "WARNING: This will destroy infrastructure. Use only in development accounts."
-	go test $(TEST) -v -sweep=$(SWEEP) $(SWEEPARGS)
+fetch: ## download makefile dependencies
+	test -f $(GOPATH)/bin/goreleaser || go get -u -v github.com/goreleaser/goreleaser
 
-test: fmtcheck
-	go test $(TEST) -timeout=30s -parallel=4
+clean: ## cleans previously built binaries
+	rm -rf ./dist
 
-testacc: fmtcheck
-	TF_ACC=1 go test $(TEST) -v -parallel 20 $(TESTARGS) -timeout 120m
-
-fmt:
-	@echo "==> Fixing source code with gofmt..."
-	gofmt -s -w ./$(PKG_NAME)
-
-# Currently required by tf-deploy compile
-fmtcheck:
-	@sh -c "'$(CURDIR)/scripts/gofmtcheck.sh'"
-
-websitefmtcheck:
-	@sh -c "'$(CURDIR)/scripts/websitefmtcheck.sh'"
-
-lint:
-	@echo "==> Checking source code against linters..."
-	@GOGC=30 golangci-lint run ./$(PKG_NAME)
-	@tfproviderlint -c 1 -S001 -S002 -S003 -S004 -S005 ./$(PKG_NAME)
-
-tools:
-	GO111MODULE=on go install github.com/bflad/tfproviderlint/cmd/tfproviderlint
-	GO111MODULE=on go install github.com/client9/misspell/cmd/misspell
-	GO111MODULE=on go install github.com/golangci/golangci-lint/cmd/golangci-lint
-
-test-compile:
-	@if [ "$(TEST)" = "./..." ]; then \
-		echo "ERROR: Set TEST to a specific package. For example,"; \
-		echo "  make test-compile TEST=./$(PKG_NAME)"; \
-		exit 1; \
+publish: clean fetch ## publishes assets
+	@if [ "${GITHUB_TOKEN}" == "" ]; then\
+	  echo "GITHUB_TOKEN is not set";\
+		exit 1;\
 	fi
-	go test -c $(TEST) $(TESTARGS)
+	@if [ "$(GIT_BRANCH)" != "master" ]; then\
+	  echo "Current branch is: '$(GIT_BRANCH)'.  Please publish from 'master'";\
+		exit 1;\
+	fi
+	git tag -a $(VERSION) -m "$(MESSAGE)"
+	git push --follow-tags
+	$(GOPATH)/bin/goreleaser
 
-website:
-ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
-	echo "$(WEBSITE_REPO) not found in your GOPATH (necessary for layouts and assets), get-ting..."
-	git clone https://$(WEBSITE_REPO) $(GOPATH)/src/$(WEBSITE_REPO)
-endif
-	@$(MAKE) -C $(GOPATH)/src/$(WEBSITE_REPO) website-provider PROVIDER_PATH=$(shell pwd) PROVIDER_NAME=$(PKG_NAME)
-
-website-lint:
-	@echo "==> Checking website against linters..."
-	@misspell -error -source=text website/
-
-website-test:
-ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
-	echo "$(WEBSITE_REPO) not found in your GOPATH (necessary for layouts and assets), get-ting..."
-	git clone https://$(WEBSITE_REPO) $(GOPATH)/src/$(WEBSITE_REPO)
-endif
-	@$(MAKE) -C $(GOPATH)/src/$(WEBSITE_REPO) website-provider-test PROVIDER_PATH=$(shell pwd) PROVIDER_NAME=$(PKG_NAME)
-
-.PHONY: build sweep test testacc fmt fmtcheck lint tools test-compile website website-lint website-test
+build: clean fetch ## publishes in dry run mode
+	$(GOPATH)/bin/goreleaser --skip-publish --snapshot

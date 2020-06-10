@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/Yelp/terraform-provider-gitfile/gitfile"
+	"github.com/tyler-technologies/terraform-provider-gitfile/gitfile"
 	"github.com/hashicorp/terraform/plugin"
 )
 
