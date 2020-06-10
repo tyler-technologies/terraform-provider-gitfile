@@ -34,6 +34,19 @@ func commitResource() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"retry_count": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Default:     10,
+				Description: "Number of git commit retries",
+			},
+
+			"retry_interval": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Default:     5,
+				Description: "Number of seconds between git commit retries",
+			},
 		},
 		Create: CommitCreate,
 		Read:   CommitRead,
@@ -43,9 +56,9 @@ func commitResource() *schema.Resource {
 }
 
 func CommitCreate(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*gitfileConfig)
-
 	checkout_dir := d.Get("checkout_dir").(string)
+	retry_count := d.Get("retry_count").(int8)
+	retry_interval := d.Get("retry_interval").(int8)
 	lockCheckout(checkout_dir)
 	defer unlockCheckout(checkout_dir)
 
@@ -75,7 +88,7 @@ func CommitCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	if err := doGitPush(checkout_dir, 0, config); err != nil {
+	if err := doGitPush(checkout_dir, 0, retry_count, retry_interval); err != nil {
 		return err
 	}
 
@@ -114,13 +127,13 @@ func CommitDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func doGitPush(checkout_dir string, count int8, config *gitfileConfig) error {
+func doGitPush(checkout_dir string, count, retry_count, retry_interval int8) error {
 	if _, err := gitCommand(checkout_dir, "push", "origin", "HEAD"); err != nil {
-		if count >= config.CommitRetryCount {
+		if count >= retry_count {
 			return err
 		}
 
-		time.Sleep(time.Duration(config.CommitRetryInterval) * time.Second)
+		time.Sleep(time.Duration(retry_interval) * time.Second)
 		count++
 
 		if _, err := gitCommand(checkout_dir, "stash"); err != nil {
@@ -134,7 +147,7 @@ func doGitPush(checkout_dir string, count int8, config *gitfileConfig) error {
 		if _, err := gitCommand(checkout_dir, "checkout", "stash", "--", "."); err != nil {
 			return errwrap.Wrapf("doGitPush error: {{err}}", err)
 		}
-		return doGitPush(checkout_dir, count, config)
+		return doGitPush(checkout_dir, count, retry_count, retry_interval)
 	}
 	return nil
 }
