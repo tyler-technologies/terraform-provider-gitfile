@@ -1,7 +1,5 @@
 # terraform-provider-gitfile
 
-[![Build Status](https://travis-ci.org/Yelp/terraform-provider-gitfile.svg?branch=master)](https://travis-ci.org/Yelp/terraform-provider-gitfile)
-
 ## Synopsis
 
 A [Terraform](http://terraform.io) plugin to manage files in git repositories.
