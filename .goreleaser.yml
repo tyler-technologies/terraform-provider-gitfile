@@ -17,6 +17,7 @@ archives:
     darwin: darwin
     linux: linux
     windows: Windows
+  format: tar.gz
 checksum:
   name_template: 'checksums.txt'
 snapshot:
