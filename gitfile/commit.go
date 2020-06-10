@@ -43,6 +43,8 @@ func commitResource() *schema.Resource {
 }
 
 func CommitCreate(d *schema.ResourceData, meta interface{}) error {
+	config := meta.(*gitfileConfig)
+
 	checkout_dir := d.Get("checkout_dir").(string)
 	lockCheckout(checkout_dir)
 	defer unlockCheckout(checkout_dir)
@@ -73,7 +75,7 @@ func CommitCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	if err := doGitPush(checkout_dir, 0); err != nil {
+	if err := doGitPush(checkout_dir, 0, config); err != nil {
 		return err
 	}
 
@@ -112,13 +114,13 @@ func CommitDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func doGitPush(checkout_dir string, count int8) error {
+func doGitPush(checkout_dir string, count int8, config *gitfileConfig) error {
 	if _, err := gitCommand(checkout_dir, "push", "origin", "HEAD"); err != nil {
-		if count >= 10 {
+		if count >= config.CommitRetryCount {
 			return err
 		}
 
-		time.Sleep(5 * time.Second)
+		time.Sleep(time.Duration(config.CommitRetryInterval) * time.Second)
 		count++
 
 		if _, err := gitCommand(checkout_dir, "stash"); err != nil {
@@ -132,7 +134,7 @@ func doGitPush(checkout_dir string, count int8) error {
 		if _, err := gitCommand(checkout_dir, "checkout", "stash", "--", "."); err != nil {
 			return errwrap.Wrapf("doGitPush error: {{err}}", err)
 		}
-		return doGitPush(checkout_dir, count)
+		return doGitPush(checkout_dir, count, config)
 	}
 	return nil
 }
