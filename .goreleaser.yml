@@ -14,8 +14,8 @@ builds:
     - amd64
 archives:
 - replacements:
-    darwin: Darwin
-    linux: Linux
+    darwin: darwin
+    linux: linux
     windows: Windows
 checksum:
   name_template: 'checksums.txt'
