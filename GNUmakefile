@@ -28,3 +28,24 @@ publish: clean fetch ## publishes assets
 
 build: clean fetch ## publishes in dry run mode
 	$(GOPATH)/bin/goreleaser --skip-publish --snapshot
+
+
+.PHONY: test
+test: ## test
+	$(eval TEST_DIR := test-2/)
+	$(eval TEST_DIRS := test_preexist test_pushconflict test_simple test_symlink)
+	$(eval TEST_DESTS := $(addprefix $(TEST_DIR), $(TEST_DIRS)))
+	$(eval COPY_FILES := $(wildcard ./dist/terraform-provider-gitfile*/*))
+	$(eval DEST_FILES := $(patsubst ./dist/terraform-provider-gitfile_%/terraform-provider-gitfile, %, $(COPY_FILES)))
+	$(eval FILES := $(foreach dir,$(TEST_DESTS),$(DEST_FILES)))
+
+	rm -rf $(TEST_DIR)
+	mkdir $(TEST_DIR)
+	@echo $(COPY_FILES)
+	@echo $(DEST_FILES)
+	@echo $(TEST_DESTS)
+	@echo $(FILES)
+# @for f in $(COPY_FILES); do \
+#   echo $$f; \
+# 	echo "$${f/$(MATCH)/$(REPL)}"; \
+# done

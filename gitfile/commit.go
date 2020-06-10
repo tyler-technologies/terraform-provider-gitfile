@@ -2,6 +2,7 @@ package gitfile
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -59,8 +60,8 @@ func commitResource() *schema.Resource {
 
 func CommitCreate(d *schema.ResourceData, meta interface{}) error {
 	checkout_dir := d.Get("checkout_dir").(string)
-	retry_count := d.Get("retry_count").(int8)
-	retry_interval := d.Get("retry_interval").(int8)
+	retry_count := d.Get("retry_count").(int)
+	retry_interval := d.Get("retry_interval").(int)
 	lockCheckout(checkout_dir)
 	defer unlockCheckout(checkout_dir)
 
@@ -73,24 +74,16 @@ func CommitCreate(d *schema.ResourceData, meta interface{}) error {
 
 	var sha string
 
-	if _, err := gitCommand(checkout_dir, "stash"); err != nil {
-		return err
-	}
-
-	if _, err := gitCommand(checkout_dir, "pull"); err != nil {
-		return err
-	}
-
-	if _, err := gitCommand(checkout_dir, "checkout", "stash", "--", "."); err != nil {
-		return err
-	}
+	stash(checkout_dir)
+	pull(checkout_dir)
+	applyStash(checkout_dir)
 
 	commit_body := fmt.Sprintf("%s\n%s", CommitBodyHeader, strings.Join(filepaths, "\n"))
 	if _, err := gitCommand(checkout_dir, flatten("commit", "-m", commit_message, "-m", commit_body, "--allow-empty")...); err != nil {
 		return err
 	}
 
-	if err := doGitPush(checkout_dir, 0, retry_count, retry_interval); err != nil {
+	if err := push(checkout_dir, 0, retry_count, retry_interval); err != nil {
 		return err
 	}
 
@@ -129,27 +122,70 @@ func CommitDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func doGitPush(checkout_dir string, count, retry_count, retry_interval int8) error {
+func push(checkout_dir string, count int8, retry_count, retry_interval int) error {
 	if _, err := gitCommand(checkout_dir, "push", "origin", "HEAD"); err != nil {
-		if count >= retry_count {
+		if int(count) >= retry_count {
 			return err
 		}
 
 		time.Sleep(time.Duration(retry_interval) * time.Second)
 		count++
 
-		if _, err := gitCommand(checkout_dir, "stash"); err != nil {
-			return errwrap.Wrapf("doGitPush error: {{err}}", err)
+		if err := resetCommit(checkout_dir); err != nil {
+			errwrap.Wrapf("push error: {{err}}", err)
 		}
 
-		if _, err := gitCommand(checkout_dir, "pull"); err != nil {
-			return errwrap.Wrapf("doGitPush error: {{err}}", err)
+		if err := stash(checkout_dir); err != nil {
+			errwrap.Wrapf("push error: {{err}}", err)
 		}
 
+		if err := pull(checkout_dir); err != nil {
+			errwrap.Wrapf("push error: {{err}}", err)
+		}
+
+		if err := applyStash(checkout_dir); err != nil {
+			errwrap.Wrapf("push error: {{err}}", err)
+		}
+
+		return push(checkout_dir, count, retry_count, retry_interval)
+	}
+	return nil
+}
+
+func stash(checkout_dir string) error {
+	if _, err := gitCommand(checkout_dir, "stash"); err != nil {
+		return err
+	}
+	return nil
+}
+
+func pull(checkout_dir string) error {
+	if _, err := gitCommand(checkout_dir, "pull"); err != nil {
+		return err
+	}
+	return nil
+}
+
+func resetCommit(checkout_dir string) error {
+	if _, err := gitCommand(checkout_dir, "reset", "--soft", "HEAD~1"); err != nil {
+		return err
+	}
+	return nil
+}
+
+func applyStash(checkout_dir string) error {
+	count, err := gitCommand(checkout_dir, "stash", "list", "|", "wc", "-l")
+	if err != nil {
+		return err
+	}
+
+	// Temporary adding this for debugging in TF call
+	log.Fatalf("Here is the count ---> : %s ", count)
+
+	if string(count) != "0" {
 		if _, err := gitCommand(checkout_dir, "checkout", "stash", "--", "."); err != nil {
-			return errwrap.Wrapf("doGitPush error: {{err}}", err)
+			return err
 		}
-		return doGitPush(checkout_dir, count, retry_count, retry_interval)
 	}
 	return nil
 }

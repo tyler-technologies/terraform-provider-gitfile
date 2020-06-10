@@ -1,5 +1,5 @@
 resource "gitfile_checkout" "test" {
-    repo = "${path.root}/example.git/.git"
+    repo = "../example.git"
     branch = "master"
     path = "checkout"
 }

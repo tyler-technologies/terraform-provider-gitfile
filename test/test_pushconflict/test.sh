@@ -7,22 +7,17 @@ git init
 touch .exists
 git add .exists
 git commit -m"Initial commit"
-echo 'preexisting_commits' > terraform
-git add terraform
-git commit -m"PRE"
 git checkout -b move_HEAD
 cd ..
 terraform init
+terraform apply -auto-approve && (echo "conflict changes" > example.git/.exists)
 terraform apply -auto-approve
-terraform apply -auto-approve
+
 cd checkout
+git log | grep 'Created by terraform gitfile_commit'
 git fetch
-# We did do a commit
 git log origin/master | grep 'Created by terraform gitfile_commit'
-# But it has no diff
-if [ "$(git diff HEAD~1..HEAD | wc -l | awk '{ print $1 }')" != "0" ];then
-    exit 1
-fi
 if [ ! -f terraform ]; then
     exit 1
 fi
+
