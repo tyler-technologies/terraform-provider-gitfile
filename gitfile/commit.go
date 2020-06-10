@@ -3,7 +3,9 @@ package gitfile
 import (
 	"fmt"
 	"strings"
+	"time"
 
+	"github.com/hashicorp/errwrap"
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
@@ -116,7 +118,20 @@ func doGitPush(checkout_dir string, count int8) error {
 			return err
 		}
 
+		time.Sleep(5 * time.Second)
 		count++
+
+		if _, err := gitCommand(checkout_dir, "stash"); err != nil {
+			return errwrap.Wrapf("doGitPush error:", err)
+		}
+
+		if _, err := gitCommand(checkout_dir, "pull"); err != nil {
+			return errwrap.Wrapf("doGitPush error:", err)
+		}
+
+		if _, err := gitCommand(checkout_dir, "checkout", "stash", "--", "."); err != nil {
+			return errwrap.Wrapf("doGitPush error:", err)
+		}
 		return doGitPush(checkout_dir, count)
 	}
 	return nil
