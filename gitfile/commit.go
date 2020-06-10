@@ -37,7 +37,7 @@ func commitResource() *schema.Resource {
 			"retry_count": {
 				Type:        schema.TypeInt,
 				Optional:    true,
-				ForceNew:    false,
+				ForceNew:    true,
 				Default:     10,
 				Description: "Number of git commit retries",
 			},
@@ -45,7 +45,7 @@ func commitResource() *schema.Resource {
 			"retry_interval": {
 				Type:        schema.TypeInt,
 				Optional:    true,
-				ForceNew:    false,
+				ForceNew:    true,
 				Default:     5,
 				Description: "Number of seconds between git commit retries",
 			},
