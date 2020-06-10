@@ -14,8 +14,8 @@ builds:
     - amd64
 archives:
 - replacements:
-    darwin: Darwin
-    linux: Linux
+    darwin: darwin
+    linux: linux
   format: tar.gz
 checksum:
   name_template: 'checksums.txt'
