@@ -3,7 +3,9 @@ package gitfile
 import (
 	"fmt"
 	"strings"
+	"time"
 
+	"github.com/hashicorp/errwrap"
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
@@ -41,6 +43,8 @@ func commitResource() *schema.Resource {
 }
 
 func CommitCreate(d *schema.ResourceData, meta interface{}) error {
+	config := meta.(*gitfileConfig)
+
 	checkout_dir := d.Get("checkout_dir").(string)
 	lockCheckout(checkout_dir)
 	defer unlockCheckout(checkout_dir)
@@ -71,7 +75,7 @@ func CommitCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	if _, err := gitCommand(checkout_dir, "push", "origin", "HEAD"); err != nil {
+	if err := doGitPush(checkout_dir, 0, config); err != nil {
 		return err
 	}
 
@@ -107,5 +111,30 @@ func CommitExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 
 func CommitDelete(d *schema.ResourceData, meta interface{}) error {
 	d.SetId("")
+	return nil
+}
+
+func doGitPush(checkout_dir string, count int8, config *gitfileConfig) error {
+	if _, err := gitCommand(checkout_dir, "push", "origin", "HEAD"); err != nil {
+		if count >= config.CommitRetryCount {
+			return err
+		}
+
+		time.Sleep(time.Duration(config.CommitRetryInterval) * time.Second)
+		count++
+
+		if _, err := gitCommand(checkout_dir, "stash"); err != nil {
+			return errwrap.Wrapf("doGitPush error: {{err}}", err)
+		}
+
+		if _, err := gitCommand(checkout_dir, "pull"); err != nil {
+			return errwrap.Wrapf("doGitPush error: {{err}}", err)
+		}
+
+		if _, err := gitCommand(checkout_dir, "checkout", "stash", "--", "."); err != nil {
+			return errwrap.Wrapf("doGitPush error: {{err}}", err)
+		}
+		return doGitPush(checkout_dir, count, config)
+	}
 	return nil
 }
