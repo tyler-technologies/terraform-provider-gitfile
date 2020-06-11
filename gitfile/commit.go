@@ -129,10 +129,10 @@ func CommitDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func push(checkout_dir string, count int8, retry_count, retry_interval int) error {
+func push(checkout_dir string, count int, retry_count, retry_interval int) error {
 	if _, err := gitCommand(checkout_dir, "push", "origin", "HEAD"); err != nil {
-		if int(count) >= retry_count {
-			return err
+		if count >= retry_count {
+			return errwrap.Wrapf("retry count elapsed: {{err}}", err)
 		}
 
 		time.Sleep(time.Duration(retry_interval) * time.Second)

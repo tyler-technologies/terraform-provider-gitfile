@@ -14,7 +14,7 @@ cd ..
 terraform init
 terraform apply -auto-approve & create_conflict
 sleep 2
-terraform apply -auto-approve
+# terraform apply -auto-approve
 
 cd checkout
 git log | grep 'Created by terraform gitfile_commit'
