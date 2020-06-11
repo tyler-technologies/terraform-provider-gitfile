@@ -1,4 +1,6 @@
 #!/bin/bash
+SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+source $SCRIPTPATH/create_conflict.sh
 set -ex
 rm -rf example.git checkout terraform.tfstate terraform.tfstate.backup
 mkdir example.git
@@ -10,7 +12,8 @@ git commit -m"Initial commit"
 git checkout -b move_HEAD
 cd ..
 terraform init
-terraform apply -auto-approve  # & (echo "conflict changes" > example.git/terraform && cd ./example.git && git add example.git/terraform && git commit -m "test conflict" && cd ..)
+terraform apply -auto-approve & create_conflict
+sleep 2
 terraform apply -auto-approve
 
 cd checkout
