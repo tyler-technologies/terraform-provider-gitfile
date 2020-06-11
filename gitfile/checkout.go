@@ -159,14 +159,6 @@ func CheckoutDelete(d *schema.ResourceData, meta interface{}) error {
 		branch = strings.TrimRight(string(out), "\n")
 	}
 
-	if err := stash(checkout_dir); err != nil {
-		return err
-	}
-
-	if _, err := gitCommand(checkout_dir, "pull", "--ff-only", "origin"); err != nil {
-		return err
-	}
-
 	if out, err := gitCommand(checkout_dir, "rev-parse", "HEAD"); err != nil {
 		return err
 	} else {
@@ -183,15 +175,11 @@ func CheckoutDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("expected head to be %s, was %s", expected_head, head)
 	}
 
-	if err := applyStash(checkout_dir); err != nil {
+	if err := stash(checkout_dir); err != nil {
 		return err
 	}
 
-	if err := commit(checkout_dir, "Removed by terraform", "nil"); err != nil {
-		return err
-	}
-
-	if err := push(checkout_dir, "Removed by Terraform", "nil", 0, retry_count, retry_interval); err != nil {
+	if err := push(checkout_dir, "Removed by Terraform", "", 0, retry_count, retry_interval); err != nil {
 		return err
 	}
 

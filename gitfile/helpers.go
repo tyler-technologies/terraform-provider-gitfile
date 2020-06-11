@@ -60,29 +60,29 @@ func unlockCheckout(checkout_dir string) {
 }
 
 func push(checkout_dir, commit_message, commit_body string, count int, retry_count, retry_interval int) error {
+	if err := pull(checkout_dir); err != nil {
+		return errwrap.Wrapf("push error: {{err}}", err)
+	}
+
+	if err := applyStash(checkout_dir); err != nil {
+		return errwrap.Wrapf("push error: {{err}}", err)
+	}
+
+	if err := commit(checkout_dir, commit_message, commit_body); err != nil {
+		return errwrap.Wrapf("push error: {{err}}", err)
+	}
+
 	if _, err := gitCommand(checkout_dir, "push", "origin", "HEAD"); err != nil {
 		if count >= retry_count {
 			return errwrap.Wrapf("retry count elapsed: {{err}}", err)
 		}
 
-		time.Sleep(time.Duration(retry_interval) * time.Second)
-		count++
-
 		if err := resetCommit(checkout_dir); err != nil {
 			return errwrap.Wrapf("push error: {{err}}", err)
 		}
 
-		if err := pull(checkout_dir); err != nil {
-			return errwrap.Wrapf("push error: {{err}}", err)
-		}
-
-		if err := applyStash(checkout_dir); err != nil {
-			return errwrap.Wrapf("push error: {{err}}", err)
-		}
-
-		if err := commit(checkout_dir, commit_message, commit_body); err != nil {
-			return errwrap.Wrapf("push error: {{err}}", err)
-		}
+		time.Sleep(time.Duration(retry_interval) * time.Second)
+		count++
 
 		return push(checkout_dir, commit_message, commit_body, count, retry_count, retry_interval)
 	}
@@ -90,8 +90,14 @@ func push(checkout_dir, commit_message, commit_body string, count int, retry_cou
 }
 
 func commit(checkout_dir, commit_message, commit_body string) error {
-	if _, err := gitCommand(checkout_dir, flatten("commit", "-m", commit_message, "-m", commit_body, "--allow-empty")...); err != nil {
-		return err
+	if isEmptyString(commit_body) {
+		if _, err := gitCommand(checkout_dir, flatten("commit", "-m", commit_message, "--allow-empty")...); err != nil {
+			return err
+		}
+	} else {
+		if _, err := gitCommand(checkout_dir, flatten("commit", "-m", commit_message, "-m", commit_body, "--allow-empty")...); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -126,4 +132,8 @@ func applyStash(checkout_dir string) error {
 		return err
 	}
 	return nil
+}
+
+func isEmptyString(s string) bool {
+	return len(strings.TrimSpace(s)) == 0
 }

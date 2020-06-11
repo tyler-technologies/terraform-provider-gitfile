@@ -14,7 +14,6 @@ cd ..
 terraform init
 terraform apply -auto-approve & create_conflict
 sleep 2
-# terraform apply -auto-approve
 
 cd checkout
 git log | grep 'Created by terraform gitfile_commit'
@@ -25,7 +24,8 @@ if [ ! -f terraform ]; then
 fi
 sleep 2
 cd ..
-terraform destroy -auto-approve & create_conflict
+terraform destroy -auto-approve & create_conflict &&
+sleep 2
 if [ -d checkout ]; then
     exit 1
 fi
