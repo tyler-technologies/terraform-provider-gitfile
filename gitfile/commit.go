@@ -139,19 +139,19 @@ func push(checkout_dir string, count int8, retry_count, retry_interval int) erro
 		count++
 
 		if err := resetCommit(checkout_dir); err != nil {
-			errwrap.Wrapf("push error: {{err}}", err)
+			return errwrap.Wrapf("push error: {{err}}", err)
 		}
 
 		if err := stash(checkout_dir); err != nil {
-			errwrap.Wrapf("push error: {{err}}", err)
+			return errwrap.Wrapf("push error: {{err}}", err)
 		}
 
 		if err := pull(checkout_dir); err != nil {
-			errwrap.Wrapf("push error: {{err}}", err)
+			return errwrap.Wrapf("push error: {{err}}", err)
 		}
 
 		if err := applyStash(checkout_dir); err != nil {
-			errwrap.Wrapf("push error: {{err}}", err)
+			return errwrap.Wrapf("push error: {{err}}", err)
 		}
 
 		return push(checkout_dir, count, retry_count, retry_interval)
