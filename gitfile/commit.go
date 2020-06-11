@@ -57,6 +57,7 @@ func commitResource() *schema.Resource {
 	}
 }
 
+// CommitCreate creates a commit
 func CommitCreate(d *schema.ResourceData, meta interface{}) error {
 	checkout_dir := d.Get("checkout_dir").(string)
 	retry_count := d.Get("retry_count").(int)
@@ -65,13 +66,12 @@ func CommitCreate(d *schema.ResourceData, meta interface{}) error {
 	defer unlockCheckout(checkout_dir)
 
 	handles := d.Get("handles").(*schema.Set)
-	commit_message := d.Get("commit_message").(string)
 	filepaths := []string{}
 	for _, handle := range handles.List() {
 		filepaths = append(filepaths, parseHandle(handle.(string)).path)
 	}
-
-	var sha string
+	commit_message := d.Get("commit_message").(string)
+	commit_body := fmt.Sprintf("%s\n%s", CommitBodyHeader, strings.Join(filepaths, "\n"))
 
 	if err := stash(checkout_dir); err != nil {
 		return err
@@ -85,36 +85,38 @@ func CommitCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	commit_body := fmt.Sprintf("%s\n%s", CommitBodyHeader, strings.Join(filepaths, "\n"))
-	if _, err := gitCommand(checkout_dir, flatten("commit", "-m", commit_message, "-m", commit_body, "--allow-empty")...); err != nil {
+	if err := commit(checkout_dir, commit_message, commit_body); err != nil {
+		return errwrap.Wrapf("push error: {{err}}", err)
+	}
+
+	if err := push(checkout_dir, commit_message, commit_body, 0, retry_count, retry_interval); err != nil {
 		return err
 	}
 
-	if err := push(checkout_dir, 0, retry_count, retry_interval); err != nil {
+	out, err := gitCommand(checkout_dir, "rev-parse", "HEAD")
+	if err != nil {
 		return err
 	}
 
-	if out, err := gitCommand(checkout_dir, "rev-parse", "HEAD"); err != nil {
-		return err
-	} else {
-		sha = strings.TrimRight(string(out), "\n")
-	}
+	sha := strings.TrimRight(string(out), "\n")
 
 	d.SetId(fmt.Sprintf("%s %s", sha, checkout_dir))
 	return nil
 }
 
+// CommitRead literally does nothing
 func CommitRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
+// CommitExists checks if a commit exists
 func CommitExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	checkoutDir := d.Get("checkout_dir").(string)
 	lockCheckout(checkoutDir)
 	defer unlockCheckout(checkoutDir)
-	commitId := strings.Split(d.Id(), " ")[0]
+	commitID := strings.Split(d.Id(), " ")[0]
 
-	_, err := gitCommand(checkoutDir, flatten("show", commitId)...)
+	_, err := gitCommand(checkoutDir, flatten("show", commitID)...)
 
 	if err != nil {
 		return false, nil
@@ -124,12 +126,13 @@ func CommitExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 
 }
 
+// CommitDelete does things
 func CommitDelete(d *schema.ResourceData, meta interface{}) error {
 	d.SetId("")
 	return nil
 }
 
-func push(checkout_dir string, count int, retry_count, retry_interval int) error {
+func push(checkout_dir, commit_message, commit_body string, count int, retry_count, retry_interval int) error {
 	if _, err := gitCommand(checkout_dir, "push", "origin", "HEAD"); err != nil {
 		if count >= retry_count {
 			return errwrap.Wrapf("retry count elapsed: {{err}}", err)
@@ -142,10 +145,6 @@ func push(checkout_dir string, count int, retry_count, retry_interval int) error
 			return errwrap.Wrapf("push error: {{err}}", err)
 		}
 
-		if err := stash(checkout_dir); err != nil {
-			return errwrap.Wrapf("push error: {{err}}", err)
-		}
-
 		if err := pull(checkout_dir); err != nil {
 			return errwrap.Wrapf("push error: {{err}}", err)
 		}
@@ -154,7 +153,18 @@ func push(checkout_dir string, count int, retry_count, retry_interval int) error
 			return errwrap.Wrapf("push error: {{err}}", err)
 		}
 
-		return push(checkout_dir, count, retry_count, retry_interval)
+		if err := commit(checkout_dir, commit_message, commit_body); err != nil {
+			return errwrap.Wrapf("push error: {{err}}", err)
+		}
+
+		return push(checkout_dir, commit_message, commit_body, count, retry_count, retry_interval)
+	}
+	return nil
+}
+
+func commit(checkout_dir, commit_message, commit_body string) error {
+	if _, err := gitCommand(checkout_dir, flatten("commit", "-m", commit_message, "-m", commit_body, "--allow-empty")...); err != nil {
+		return err
 	}
 	return nil
 }
