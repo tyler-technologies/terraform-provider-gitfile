@@ -24,7 +24,7 @@ if [ ! -f terraform ]; then
 fi
 sleep 2
 cd ..
-terraform destroy -auto-approve & create_conflict &&
+terraform destroy -auto-approve
 sleep 2
 if [ -d checkout ]; then
     exit 1

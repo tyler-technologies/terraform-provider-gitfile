@@ -39,21 +39,6 @@ func checkoutResource() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"retry_count": {
-				Type:        schema.TypeInt,
-				Optional:    true,
-				ForceNew:    true,
-				Default:     10,
-				Description: "Number of git commit retries",
-			},
-
-			"retry_interval": {
-				Type:        schema.TypeInt,
-				Optional:    true,
-				ForceNew:    true,
-				Default:     5,
-				Description: "Number of seconds between git commit retries",
-			},
 		},
 		Create: CheckoutCreate,
 		Read:   CheckoutRead,
@@ -125,17 +110,15 @@ func CheckoutRead(d *schema.ResourceData, meta interface{}) error {
 		head = strings.TrimRight(string(out), "\n")
 	}
 
-	_ = d.Set("path", checkout_dir)
-	_ = d.Set("repo", repo)
-	_ = d.Set("branch", branch)
-	_ = d.Set("head", head)
+	d.Set("path", checkout_dir)
+	d.Set("repo", repo)
+	d.Set("branch", branch)
+	d.Set("head", head)
 	return nil
 }
 
 func CheckoutDelete(d *schema.ResourceData, meta interface{}) error {
 	checkout_dir := d.Id()
-	retry_count := d.Get("retry_count").(int)
-	retry_interval := d.Get("retry_interval").(int)
 	lockCheckout(checkout_dir)
 	defer unlockCheckout(checkout_dir)
 
@@ -159,6 +142,10 @@ func CheckoutDelete(d *schema.ResourceData, meta interface{}) error {
 		branch = strings.TrimRight(string(out), "\n")
 	}
 
+	if _, err := gitCommand(checkout_dir, "pull", "--ff-only", "origin"); err != nil {
+		return err
+	}
+
 	if out, err := gitCommand(checkout_dir, "rev-parse", "HEAD"); err != nil {
 		return err
 	} else {
@@ -175,11 +162,11 @@ func CheckoutDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("expected head to be %s, was %s", expected_head, head)
 	}
 
-	if err := stash(checkout_dir); err != nil {
+	if _, err := gitCommand(checkout_dir, flatten("commit", "-m", "Removed by Terraform", "--allow-empty")...); err != nil {
 		return err
 	}
 
-	if err := push(checkout_dir, "Removed by Terraform", "", 0, retry_count, retry_interval); err != nil {
+	if _, err := gitCommand(checkout_dir, "push", "origin", "HEAD"); err != nil {
 		return err
 	}
 
