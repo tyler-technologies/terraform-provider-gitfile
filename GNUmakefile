@@ -4,7 +4,7 @@ export $(PATH)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 COPY_FILES := $(wildcard ./dist/terraform-provider-gitfile*/*)
 TEST_DIR := test/
-TEST_DESTS := $(patsubst $(TEST_DIR)%/test.sh, $(TEST_DIR)%, $(wildcard test/*/test.sh))
+TEST_DESTS := $(patsubst $(TEST_DIR)%/test.sh, $(TEST_DIR)%, $(wildcard $(TEST_DIR)*/test.sh))
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
@@ -44,6 +44,6 @@ test: ## test
 		  cp ./dist/terraform-provider-gitfile_$$o/* $$f/terraform.d/plugins/$$o; \
 		done; \
 	done
-#	@cd test && $(MAKE) test
+	@cd test && $(MAKE) test
 
 fulltest: build test ## build and test
