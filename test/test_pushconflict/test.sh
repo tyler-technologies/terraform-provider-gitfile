@@ -23,3 +23,9 @@ git log origin/master | grep 'Created by terraform gitfile_commit'
 if [ ! -f terraform ]; then
     exit 1
 fi
+sleep 2
+cd ..
+terraform destroy -auto-approve & create_conflict
+if [ -d checkout ]; then
+    exit 1
+fi

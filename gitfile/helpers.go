@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/errwrap"
 	"github.com/hashicorp/terraform/helper/hashcode"
@@ -56,4 +57,73 @@ func lockCheckout(checkout_dir string) {
 
 func unlockCheckout(checkout_dir string) {
 	gitfileMutexKV.Unlock(checkout_dir)
+}
+
+func push(checkout_dir, commit_message, commit_body string, count int, retry_count, retry_interval int) error {
+	if _, err := gitCommand(checkout_dir, "push", "origin", "HEAD"); err != nil {
+		if count >= retry_count {
+			return errwrap.Wrapf("retry count elapsed: {{err}}", err)
+		}
+
+		time.Sleep(time.Duration(retry_interval) * time.Second)
+		count++
+
+		if err := resetCommit(checkout_dir); err != nil {
+			return errwrap.Wrapf("push error: {{err}}", err)
+		}
+
+		if err := pull(checkout_dir); err != nil {
+			return errwrap.Wrapf("push error: {{err}}", err)
+		}
+
+		if err := applyStash(checkout_dir); err != nil {
+			return errwrap.Wrapf("push error: {{err}}", err)
+		}
+
+		if err := commit(checkout_dir, commit_message, commit_body); err != nil {
+			return errwrap.Wrapf("push error: {{err}}", err)
+		}
+
+		return push(checkout_dir, commit_message, commit_body, count, retry_count, retry_interval)
+	}
+	return nil
+}
+
+func commit(checkout_dir, commit_message, commit_body string) error {
+	if _, err := gitCommand(checkout_dir, flatten("commit", "-m", commit_message, "-m", commit_body, "--allow-empty")...); err != nil {
+		return err
+	}
+	return nil
+}
+
+func stash(checkout_dir string) error {
+	if _, err := gitCommand(checkout_dir, "stash"); err != nil {
+		return err
+	}
+	return nil
+}
+
+func pull(checkout_dir string) error {
+	if _, err := gitCommand(checkout_dir, "pull"); err != nil {
+		return err
+	}
+	return nil
+}
+
+func resetCommit(checkout_dir string) error {
+	if _, err := gitCommand(checkout_dir, "reset", "--soft", "HEAD~1"); err != nil {
+		return err
+	}
+	return nil
+}
+
+func applyStash(checkout_dir string) error {
+	if _, err := gitCommand(checkout_dir, "stash", "show", "stash@{0}"); err != nil {
+		return nil
+	}
+
+	if _, err := gitCommand(checkout_dir, "checkout", "stash", "--", "."); err != nil {
+		return err
+	}
+	return nil
 }
