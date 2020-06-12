@@ -162,7 +162,7 @@ func CheckoutDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("expected head to be %s, was %s", expected_head, head)
 	}
 
-	if _, err := gitCommand(checkout_dir, flatten("commit", "-m", "Removed by Terraform", "--allow-empty")...); err != nil {
+	if _, err := gitCommand(checkout_dir, flatten("commit", "-a", "-m", "Removed by Terraform", "--allow-empty")...); err != nil {
 		return err
 	}
 

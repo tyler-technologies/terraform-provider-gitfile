@@ -13,8 +13,6 @@ git checkout -b move_HEAD
 cd ..
 terraform init
 terraform apply -auto-approve & create_conflict
-sleep 2
-
 cd checkout
 git log | grep 'Created by terraform gitfile_commit'
 git fetch

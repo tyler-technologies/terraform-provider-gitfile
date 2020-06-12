@@ -91,11 +91,11 @@ func push(checkout_dir, commit_message, commit_body string, count int, retry_cou
 
 func commit(checkout_dir, commit_message, commit_body string) error {
 	if isEmptyString(commit_body) {
-		if _, err := gitCommand(checkout_dir, flatten("commit", "-m", commit_message, "--allow-empty")...); err != nil {
+		if _, err := gitCommand(checkout_dir, flatten("commit", "-a", "-m", commit_message, "--allow-empty")...); err != nil {
 			return err
 		}
 	} else {
-		if _, err := gitCommand(checkout_dir, flatten("commit", "-m", commit_message, "-m", commit_body, "--allow-empty")...); err != nil {
+		if _, err := gitCommand(checkout_dir, flatten("commit", "-a", "-m", commit_message, "-m", commit_body, "--allow-empty")...); err != nil {
 			return err
 		}
 	}
