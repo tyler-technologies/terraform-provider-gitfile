@@ -9,8 +9,10 @@ git add .exists
 git commit -m"Initial commit"
 git checkout -b move_HEAD
 cd ..
-terraform apply
-terraform apply
+terraform init
+terraform apply -auto-approve
+terraform apply -auto-approve
+
 gitfile_checkout_path="$(terraform output gitfile_checkout_path)"
 if [ "$gitfile_checkout_path" != "checkout" ];then
     exit 1

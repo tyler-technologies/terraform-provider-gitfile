@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/hashicorp/errwrap"
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
@@ -38,6 +39,21 @@ func checkoutResource() *schema.Resource {
 			"head": {
 				Type:     schema.TypeString,
 				Computed: true,
+			},
+			"retry_count": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				ForceNew:    true,
+				Default:     10,
+				Description: "Number of git commit retries",
+			},
+
+			"retry_interval": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				ForceNew:    true,
+				Default:     5,
+				Description: "Number of seconds between git commit retries",
 			},
 		},
 		Create: CheckoutCreate,
@@ -119,6 +135,8 @@ func CheckoutRead(d *schema.ResourceData, meta interface{}) error {
 
 func CheckoutDelete(d *schema.ResourceData, meta interface{}) error {
 	checkout_dir := d.Id()
+	retry_count := d.Get("retry_count").(int)
+	retry_interval := d.Get("retry_interval").(int)
 	lockCheckout(checkout_dir)
 	defer unlockCheckout(checkout_dir)
 
@@ -162,11 +180,19 @@ func CheckoutDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("expected head to be %s, was %s", expected_head, head)
 	}
 
-	if _, err := gitCommand(checkout_dir, flatten("commit", "-m", "Removed by Terraform", "--allow-empty")...); err != nil {
-		return err
+	// if _, err := gitCommand(checkout_dir, flatten("commit", "-a", "-m", "Removed by Terraform", "--allow-empty")...); err != nil {
+	// 	return err
+	// }
+
+	// if _, err := gitCommand(checkout_dir, "push", "origin", "HEAD"); err != nil {
+	// 	return err
+	// }
+
+	if err := commit(checkout_dir, "Removed by Terraform", ""); err != nil {
+		return errwrap.Wrapf("push error: {{err}}", err)
 	}
 
-	if _, err := gitCommand(checkout_dir, "push", "origin", "HEAD"); err != nil {
+	if err := push(checkout_dir, 0, retry_count, retry_interval); err != nil {
 		return err
 	}
 

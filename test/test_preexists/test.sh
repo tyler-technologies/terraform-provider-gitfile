@@ -12,8 +12,9 @@ git add terraform
 git commit -m"PRE"
 git checkout -b move_HEAD
 cd ..
-terraform apply
-terraform apply
+terraform init
+terraform apply -auto-approve
+terraform apply -auto-approve
 cd checkout
 git fetch
 # We did do a commit
