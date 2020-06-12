@@ -59,32 +59,32 @@ func unlockCheckout(checkout_dir string) {
 	gitfileMutexKV.Unlock(checkout_dir)
 }
 
-func push(checkout_dir, commit_message, commit_body string, count int, retry_count, retry_interval int) error {
+func push(checkout_dir string, count int, retry_count, retry_interval int) error {
 	if err := pull(checkout_dir); err != nil {
 		return errwrap.Wrapf("push error: {{err}}", err)
 	}
 
-	if err := applyStash(checkout_dir); err != nil {
-		return errwrap.Wrapf("push error: {{err}}", err)
-	}
+	// if err := applyStash(checkout_dir); err != nil {
+	// 	return errwrap.Wrapf("push error: {{err}}", err)
+	// }
 
-	if err := commit(checkout_dir, commit_message, commit_body); err != nil {
-		return errwrap.Wrapf("push error: {{err}}", err)
-	}
+	// if err := commit(checkout_dir, commit_message, commit_body); err != nil {
+	// 	return errwrap.Wrapf("push error: {{err}}", err)
+	// }
 
 	if _, err := gitCommand(checkout_dir, "push", "origin", "HEAD"); err != nil {
 		if count >= retry_count {
 			return errwrap.Wrapf("retry count elapsed: {{err}}", err)
 		}
 
-		if err := resetCommit(checkout_dir); err != nil {
-			return errwrap.Wrapf("push error: {{err}}", err)
-		}
+		// if err := resetCommit(checkout_dir); err != nil {
+		// 	return errwrap.Wrapf("push error: {{err}}", err)
+		// }
 
 		time.Sleep(time.Duration(retry_interval) * time.Second)
 		count++
 
-		return push(checkout_dir, commit_message, commit_body, count, retry_count, retry_interval)
+		return push(checkout_dir, count, retry_count, retry_interval)
 	}
 	return nil
 }
@@ -110,7 +110,7 @@ func stash(checkout_dir string) error {
 }
 
 func pull(checkout_dir string) error {
-	if _, err := gitCommand(checkout_dir, "pull"); err != nil {
+	if _, err := gitCommand(checkout_dir, "pull", "--strategy=ours"); err != nil {
 		return err
 	}
 	return nil

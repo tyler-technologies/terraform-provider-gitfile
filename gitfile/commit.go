@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/errwrap"
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
@@ -70,11 +71,15 @@ func CommitCreate(d *schema.ResourceData, meta interface{}) error {
 	commit_message := d.Get("commit_message").(string)
 	commit_body := fmt.Sprintf("%s\n%s", CommitBodyHeader, strings.Join(filepaths, "\n"))
 
-	if err := stash(checkout_dir); err != nil {
-		return err
+	// if err := stash(checkout_dir); err != nil {
+	// 	return err
+	// }
+
+	if err := commit(checkout_dir, commit_message, commit_body); err != nil {
+		return errwrap.Wrapf("push error: {{err}}", err)
 	}
 
-	if err := push(checkout_dir, commit_message, commit_body, 0, retry_count, retry_interval); err != nil {
+	if err := push(checkout_dir, 0, retry_count, retry_interval); err != nil {
 		return err
 	}
 

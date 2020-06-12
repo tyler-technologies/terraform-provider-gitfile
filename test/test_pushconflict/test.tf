@@ -19,6 +19,6 @@ resource "gitfile_file" "shizz" {
 resource "gitfile_commit" "commit" {
     checkout_dir = gitfile_checkout.checkout.path
     commit_message = "Created by terraform gitfile_commit"
-    # handles = ["${gitfile_file.test.id}"]
+    # handles = ["${gitfile_file.testfile.id}"]
     handles = ["${gitfile_file.testfile.id}", "${gitfile_file.shizz.id}"]
 }
