@@ -64,22 +64,10 @@ func push(checkout_dir string, count int, retry_count, retry_interval int) error
 		return errwrap.Wrapf("push error: {{err}}", err)
 	}
 
-	// if err := applyStash(checkout_dir); err != nil {
-	// 	return errwrap.Wrapf("push error: {{err}}", err)
-	// }
-
-	// if err := commit(checkout_dir, commit_message, commit_body); err != nil {
-	// 	return errwrap.Wrapf("push error: {{err}}", err)
-	// }
-
 	if _, err := gitCommand(checkout_dir, "push", "origin", "HEAD"); err != nil {
 		if count >= retry_count {
 			return errwrap.Wrapf("retry count elapsed: {{err}}", err)
 		}
-
-		// if err := resetCommit(checkout_dir); err != nil {
-		// 	return errwrap.Wrapf("push error: {{err}}", err)
-		// }
 
 		time.Sleep(time.Duration(retry_interval) * time.Second)
 		count++
