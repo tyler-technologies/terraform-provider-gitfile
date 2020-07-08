@@ -14,6 +14,7 @@ fetch: ## download makefile dependencies
 
 clean: ## cleans previously built binaries
 	rm -rf ./dist
+	@cd test && $(MAKE) clean
 
 publish: clean fetch ## publishes assets
 	@if [ "${GITHUB_TOKEN}" == "" ]; then\

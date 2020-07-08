@@ -35,7 +35,6 @@ func checkoutResource() *schema.Resource {
 				Default:     10,
 				Description: "Number of git commit retries",
 			},
-
 			"retry_interval": {
 				Type:        schema.TypeInt,
 				Optional:    true,

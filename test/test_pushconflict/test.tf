@@ -7,11 +7,13 @@ provider "gitfile" {
 resource "gitfile_checkout" "checkout" {}
 
 resource "gitfile_file" "testfile" {
+    checkout = gitfile_checkout.checkout.id
     path = "terraform"
     contents = "Terraform making commits"
 }
 
 resource "gitfile_file" "shizz" {
+    checkout = gitfile_checkout.checkout.id
     path = "myfile"
     contents = "Terraform shizz"
 }
