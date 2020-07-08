@@ -11,6 +11,7 @@ output "gitfile_checkout_path" {
 }
 
 resource "gitfile_file" "test" {
+    checkout = gitfile_checkout.test.id
     path = "terraform"
     contents = "Terraform making commits"
 }
@@ -22,4 +23,8 @@ resource "gitfile_commit" "test" {
 
 output "gitfile_commit_commit_message" {
     value = gitfile_commit.test.commit_message
+}
+
+output "gitfile_checkout" {
+    value = gitfile_checkout.test
 }

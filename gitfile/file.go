@@ -11,6 +11,11 @@ import (
 func fileResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
+			"checkout": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
 			"path": {
 				Type:     schema.TypeString,
 				Required: true,
