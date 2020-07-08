@@ -79,8 +79,6 @@ func clone(dir, repo, branch string) error {
 
 func read(d *schema.ResourceData) error {
 	checkout_dir := d.Id()
-	lockCheckout(checkout_dir)
-	defer unlockCheckout(checkout_dir)
 	var repo string
 	var branch string
 	var head string
