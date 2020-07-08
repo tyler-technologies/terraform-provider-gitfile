@@ -63,44 +63,24 @@ func checkoutResource() *schema.Resource {
 	}
 }
 
-func CheckoutCreate(d *schema.ResourceData, meta interface{}) error {
-	checkout_dir := d.Get("path").(string)
-	repo := d.Get("repo").(string)
-	branch := d.Get("branch").(string)
-
-	if err := os.MkdirAll(checkout_dir, 0755); err != nil {
+func clone(dir, repo, branch string) error {
+	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
 	}
 
 	// May already be checked out from another project
-	if _, err := os.Stat(fmt.Sprintf("%s/.git", checkout_dir)); err != nil {
-		if _, err := gitCommand(checkout_dir, "clone", "-b", branch, "--", repo, "."); err != nil {
+	if _, err := os.Stat(fmt.Sprintf("%s/.git", dir)); err != nil {
+		if _, err := gitCommand(dir, "clone", "-b", branch, "--", repo, "."); err != nil {
 			return err
 		}
 	}
-	var head string
-	if out, err := gitCommand(checkout_dir, "rev-parse", "HEAD"); err != nil {
-		return err
-	} else {
-		head = strings.TrimRight(string(out), "\n")
-	}
-
-	d.Set("head", head)
-	d.SetId(checkout_dir)
-	return CheckoutRead(d, meta)
+	return nil
 }
 
-func CheckoutRead(d *schema.ResourceData, meta interface{}) error {
+func read(d *schema.ResourceData) error {
 	checkout_dir := d.Id()
-
-	if _, err := os.Stat(checkout_dir); err != nil {
-		d.SetId("")
-		return nil
-	}
-
 	lockCheckout(checkout_dir)
 	defer unlockCheckout(checkout_dir)
-
 	var repo string
 	var branch string
 	var head string
@@ -125,7 +105,6 @@ func CheckoutRead(d *schema.ResourceData, meta interface{}) error {
 	} else {
 		head = strings.TrimRight(string(out), "\n")
 	}
-
 	d.Set("path", checkout_dir)
 	d.Set("repo", repo)
 	d.Set("branch", branch)
@@ -133,16 +112,55 @@ func CheckoutRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
+func CheckoutCreate(d *schema.ResourceData, meta interface{}) error {
+	checkout_dir := d.Get("path").(string)
+	repo := d.Get("repo").(string)
+	branch := d.Get("branch").(string)
+
+	err := clone(checkout_dir, repo, branch)
+	if err != nil {
+		return err
+	}
+
+	d.SetId(checkout_dir)
+	return read(d)
+}
+
+func CheckoutRead(d *schema.ResourceData, meta interface{}) error {
+	checkout_dir := d.Id()
+	repo := d.Get("repo").(string)
+	branch := d.Get("branch").(string)
+
+	if _, err := os.Stat(checkout_dir); err != nil {
+		err = clone(checkout_dir, repo, branch)
+		if err != nil {
+			return err
+		}
+	}
+	lockCheckout(checkout_dir)
+	defer unlockCheckout(checkout_dir)
+	read(d)
+
+	return nil
+}
+
 func CheckoutDelete(d *schema.ResourceData, meta interface{}) error {
 	checkout_dir := d.Id()
 	retry_count := d.Get("retry_count").(int)
 	retry_interval := d.Get("retry_interval").(int)
-	lockCheckout(checkout_dir)
-	defer unlockCheckout(checkout_dir)
-
 	expected_repo := d.Get("repo").(string)
 	expected_branch := d.Get("branch").(string)
 	expected_head := d.Get("head").(string)
+
+	if _, err := os.Stat(checkout_dir); err != nil {
+		err = clone(checkout_dir, expected_repo, expected_branch)
+		if err != nil {
+			return err
+		}
+	}
+
+	lockCheckout(checkout_dir)
+	defer unlockCheckout(checkout_dir)
 
 	// sanity check
 	var repo string
