@@ -1,7 +1,7 @@
 .terraform/**
 terraform-provider-gitfile
-test/test_*/example.git
-test/test_*/checkout
+# test/test_*/example.git
+# test/test_*/checkout
 test/test_*/terraform.tfstate.backup
 test/test_*/terraform.tfstate
 test/test_*/.terraform/**

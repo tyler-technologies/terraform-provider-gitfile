@@ -1,19 +1,15 @@
 package gitfile
 
 import (
-	"github.com/hashicorp/terraform/helper/schema"
 	"os"
 	"path"
+
+	"github.com/hashicorp/terraform/helper/schema"
 )
 
 func symlinkResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
-			"checkout_dir": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
 			"path": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -32,8 +28,8 @@ func symlinkResource() *schema.Resource {
 	}
 }
 
-func symlinkCreateUpdate(d *schema.ResourceData, meta interface{}) error {
-	checkout_dir := d.Get("checkout_dir").(string)
+func symlinkCreateUpdate(d *schema.ResourceData, m interface{}) error {
+	checkout_dir := m.(*GitFileConfig).Path
 	lockCheckout(checkout_dir)
 	defer unlockCheckout(checkout_dir)
 
@@ -64,12 +60,12 @@ func symlinkCreateUpdate(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func symlinkRead(d *schema.ResourceData, meta interface{}) error {
+func symlinkRead(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-func symlinkExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	checkout_dir := d.Get("checkout_dir").(string)
+func symlinkExists(d *schema.ResourceData, m interface{}) (bool, error) {
+	checkout_dir := m.(*GitFileConfig).Path
 	lockCheckout(checkout_dir)
 	defer unlockCheckout(checkout_dir)
 	filepath := d.Get("path").(string)
@@ -90,6 +86,6 @@ func symlinkExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	}
 }
 
-func symlinkDelete(d *schema.ResourceData, meta interface{}) error {
+func symlinkDelete(d *schema.ResourceData, m interface{}) error {
 	return nil
 }

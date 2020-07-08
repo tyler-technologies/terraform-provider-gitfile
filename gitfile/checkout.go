@@ -14,27 +14,15 @@ func checkoutResource() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"path": {
 				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-				ValidateFunc: func(v interface{}, k string) (ws []string, es []error) {
-					value := v.(string)
-					i := strings.IndexRune(value, '/')
-					if i == 0 {
-						es = append(es, fmt.Errorf("Paths which begin with / not allowed in %q", k))
-					}
-					return
-				},
+				Computed: true,
 			},
 			"repo": {
 				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Computed: true,
 			},
 			"branch": {
 				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "master",
-				ForceNew: true, // FIXME
+				Computed: true,
 			},
 			"head": {
 				Type:     schema.TypeString,
@@ -63,20 +51,6 @@ func checkoutResource() *schema.Resource {
 	}
 }
 
-func clone(dir, repo, branch string) error {
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return err
-	}
-
-	// May already be checked out from another project
-	if _, err := os.Stat(fmt.Sprintf("%s/.git", dir)); err != nil {
-		if _, err := gitCommand(dir, "clone", "-b", branch, "--", repo, "."); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func read(d *schema.ResourceData) error {
 	checkout_dir := d.Id()
 	var repo string
@@ -103,17 +77,18 @@ func read(d *schema.ResourceData) error {
 	} else {
 		head = strings.TrimRight(string(out), "\n")
 	}
-	d.Set("path", checkout_dir)
-	d.Set("repo", repo)
-	d.Set("branch", branch)
-	d.Set("head", head)
+	_ = d.Set("path", checkout_dir)
+	_ = d.Set("repo", repo)
+	_ = d.Set("branch", branch)
+	_ = d.Set("head", head)
 	return nil
 }
 
-func CheckoutCreate(d *schema.ResourceData, meta interface{}) error {
-	checkout_dir := d.Get("path").(string)
-	repo := d.Get("repo").(string)
-	branch := d.Get("branch").(string)
+func CheckoutCreate(d *schema.ResourceData, m interface{}) error {
+	c := m.(*GitFileConfig)
+	checkout_dir := c.Path
+	repo := c.RepoUrl
+	branch := c.Branch
 
 	err := clone(checkout_dir, repo, branch)
 	if err != nil {
@@ -124,10 +99,11 @@ func CheckoutCreate(d *schema.ResourceData, meta interface{}) error {
 	return read(d)
 }
 
-func CheckoutRead(d *schema.ResourceData, meta interface{}) error {
+func CheckoutRead(d *schema.ResourceData, m interface{}) error {
 	checkout_dir := d.Id()
-	repo := d.Get("repo").(string)
-	branch := d.Get("branch").(string)
+	c := m.(*GitFileConfig)
+	repo := c.RepoUrl
+	branch := c.Branch
 
 	if _, err := os.Stat(checkout_dir); err != nil {
 		err = clone(checkout_dir, repo, branch)
@@ -137,21 +113,23 @@ func CheckoutRead(d *schema.ResourceData, meta interface{}) error {
 	}
 	lockCheckout(checkout_dir)
 	defer unlockCheckout(checkout_dir)
-	read(d)
-
-	return nil
+	return read(d)
 }
 
-func CheckoutDelete(d *schema.ResourceData, meta interface{}) error {
+func CheckoutDelete(d *schema.ResourceData, m interface{}) error {
 	checkout_dir := d.Id()
 	retry_count := d.Get("retry_count").(int)
 	retry_interval := d.Get("retry_interval").(int)
+
+	c := m.(*GitFileConfig)
+	repo := c.RepoUrl
+	branch := c.Branch
 	expected_repo := d.Get("repo").(string)
 	expected_branch := d.Get("branch").(string)
 	expected_head := d.Get("head").(string)
 
 	if _, err := os.Stat(checkout_dir); err != nil {
-		err = clone(checkout_dir, expected_repo, expected_branch)
+		err = clone(checkout_dir, repo, branch)
 		if err != nil {
 			return err
 		}
@@ -161,8 +139,6 @@ func CheckoutDelete(d *schema.ResourceData, meta interface{}) error {
 	defer unlockCheckout(checkout_dir)
 
 	// sanity check
-	var repo string
-	var branch string
 	var head string
 
 	if out, err := gitCommand(checkout_dir, "config", "--get", "remote.origin.url"); err != nil {

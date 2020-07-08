@@ -19,11 +19,6 @@ func commitResource() *schema.Resource {
 				Default:  "Created by terraform gitfile_commit",
 				ForceNew: true,
 			},
-			"checkout_dir": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
 			"handles": {
 				Type:     schema.TypeSet,
 				Required: true,
@@ -56,8 +51,8 @@ func commitResource() *schema.Resource {
 	}
 }
 
-func CommitCreate(d *schema.ResourceData, meta interface{}) error {
-	checkout_dir := d.Get("checkout_dir").(string)
+func CommitCreate(d *schema.ResourceData, m interface{}) error {
+	checkout_dir := m.(*GitFileConfig).Path
 	retry_count := d.Get("retry_count").(int)
 	retry_interval := d.Get("retry_interval").(int)
 	lockCheckout(checkout_dir)
@@ -90,17 +85,17 @@ func CommitCreate(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func CommitRead(d *schema.ResourceData, meta interface{}) error {
+func CommitRead(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-func CommitExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	checkoutDir := d.Get("checkout_dir").(string)
-	lockCheckout(checkoutDir)
-	defer unlockCheckout(checkoutDir)
+func CommitExists(d *schema.ResourceData, m interface{}) (bool, error) {
+	checkout_dir := m.(*GitFileConfig).Path
+	lockCheckout(checkout_dir)
+	defer unlockCheckout(checkout_dir)
 	commitID := strings.Split(d.Id(), " ")[0]
 
-	_, err := gitCommand(checkoutDir, flatten("show", commitID)...)
+	_, err := gitCommand(checkout_dir, flatten("show", commitID)...)
 
 	if err != nil {
 		return false, nil
@@ -110,7 +105,7 @@ func CommitExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 
 }
 
-func CommitDelete(d *schema.ResourceData, meta interface{}) error {
+func CommitDelete(d *schema.ResourceData, m interface{}) error {
 	d.SetId("")
 	return nil
 }

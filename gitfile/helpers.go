@@ -2,6 +2,7 @@ package gitfile
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 	"time"
@@ -10,6 +11,20 @@ import (
 	"github.com/hashicorp/terraform/helper/hashcode"
 	"github.com/hashicorp/terraform/helper/mutexkv"
 )
+
+func clone(dir, repo, branch string) error {
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return err
+	}
+
+	// May already be checked out from another project
+	if _, err := os.Stat(fmt.Sprintf("%s/.git", dir)); err != nil {
+		if _, err := gitCommand(dir, "clone", "-b", branch, "--", repo, "."); err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 func gitCommand(checkout_dir string, args ...string) ([]byte, error) {
 	command := exec.Command("git", args...)
@@ -90,33 +105,8 @@ func commit(checkout_dir, commit_message, commit_body string) error {
 	return nil
 }
 
-func stash(checkout_dir string) error {
-	if _, err := gitCommand(checkout_dir, "stash"); err != nil {
-		return err
-	}
-	return nil
-}
-
 func pull(checkout_dir string) error {
 	if _, err := gitCommand(checkout_dir, "pull", "--strategy=ours"); err != nil {
-		return err
-	}
-	return nil
-}
-
-func resetCommit(checkout_dir string) error {
-	if _, err := gitCommand(checkout_dir, "reset", "--soft", "HEAD~1"); err != nil {
-		return err
-	}
-	return nil
-}
-
-func applyStash(checkout_dir string) error {
-	if _, err := gitCommand(checkout_dir, "stash", "show", "stash@{0}"); err != nil {
-		return nil
-	}
-
-	if _, err := gitCommand(checkout_dir, "checkout", "stash", "--", "."); err != nil {
 		return err
 	}
 	return nil

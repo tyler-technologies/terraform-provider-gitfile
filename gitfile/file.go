@@ -11,11 +11,6 @@ import (
 func fileResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
-			"checkout_dir": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
 			"path": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -34,8 +29,8 @@ func fileResource() *schema.Resource {
 	}
 }
 
-func fileCreateUpdate(d *schema.ResourceData, meta interface{}) error {
-	checkout_dir := d.Get("checkout_dir").(string)
+func fileCreateUpdate(d *schema.ResourceData, m interface{}) error {
+	checkout_dir := m.(*GitFileConfig).Path
 	lockCheckout(checkout_dir)
 	defer unlockCheckout(checkout_dir)
 
@@ -63,12 +58,12 @@ func fileCreateUpdate(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func fileRead(d *schema.ResourceData, meta interface{}) error {
+func fileRead(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-func fileExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	checkout_dir := d.Get("checkout_dir").(string)
+func fileExists(d *schema.ResourceData, m interface{}) (bool, error) {
+	checkout_dir := m.(*GitFileConfig).Path
 	lockCheckout(checkout_dir)
 	defer unlockCheckout(checkout_dir)
 	filepath := d.Get("path").(string)
@@ -89,8 +84,8 @@ func fileExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	}
 }
 
-func fileDelete(d *schema.ResourceData, meta interface{}) error {
-	checkout_dir := d.Get("checkout_dir").(string)
+func fileDelete(d *schema.ResourceData, m interface{}) error {
+	checkout_dir := m.(*GitFileConfig).Path
 	lockCheckout(checkout_dir)
 	defer unlockCheckout(checkout_dir)
 	filepath := d.Get("path").(string)
