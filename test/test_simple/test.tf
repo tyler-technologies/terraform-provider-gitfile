@@ -24,7 +24,3 @@ resource "gitfile_commit" "test" {
 output "gitfile_commit_commit_message" {
     value = gitfile_commit.test.commit_message
 }
-
-output "gitfile_checkout" {
-    value = gitfile_checkout.test
-}
