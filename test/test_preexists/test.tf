@@ -7,6 +7,7 @@ provider "gitfile" {
 resource "gitfile_checkout" "test" {}
 
 resource "gitfile_file" "test" {
+    checkout = gitfile_checkout.test.id
     path = "terraform"
     contents = "preexisting_commits\n"
 }
