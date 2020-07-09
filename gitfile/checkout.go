@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/hashicorp/errwrap"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -29,11 +28,6 @@ func checkoutResource() *schema.Resource {
 			"head": {
 				Type:     schema.TypeString,
 				Computed: true,
-			},
-			"timestamp": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
 			},
 			"retry_count": {
 				Type:        schema.TypeInt,
@@ -87,7 +81,6 @@ func read(d *schema.ResourceData) error {
 	_ = d.Set("repo", repo)
 	_ = d.Set("branch", branch)
 	_ = d.Set("head", head)
-	_ = d.Set("timestamp", time.Now().Format(time.RFC3339))
 	return nil
 }
 
