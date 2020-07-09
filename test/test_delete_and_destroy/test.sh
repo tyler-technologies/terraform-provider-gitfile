@@ -12,7 +12,10 @@ git commit -m"Initial commit"
 git checkout -b move_HEAD
 cd ..
 terraform init
-terraform apply -auto-approve
+terraform plan -out=plan.out
+rm -rf checkout
+terraform apply plan.out
+rm plan.out
 
 gitfile_checkout_path="$(terraform output gitfile_checkout_path)"
 if [ "$gitfile_checkout_path" != "checkout" ];then
@@ -39,7 +42,10 @@ fi
 git checkout move_HEAD
 cd ..
 rm -rf checkout
-terraform destroy -auto-approve
+terraform plan -destroy -out=destroy.out
+rm -rf checkout
+terraform apply destroy.out
+rm destroy.out
 cd example.git
 git checkout master
 if [ -f terraform ]; then

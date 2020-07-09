@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path"
 	"strings"
 	"time"
 
@@ -25,8 +26,12 @@ func getConfig(m interface{}) GitFileConfig {
 
 func cloneIfNotExist(c GitFileConfig) error {
 	if _, err := os.Stat(c.Path); err != nil {
-		err = clone(c.Path, c.RepoUrl, c.Branch)
-		if err != nil {
+		if err = clone(c.Path, c.RepoUrl, c.Branch); err != nil {
+			return err
+		}
+	} else if _, err := os.Stat(path.Join(c.Path, ".git")); err != nil {
+		os.RemoveAll(c.Path)
+		if err = clone(c.Path, c.RepoUrl, c.Branch); err != nil {
 			return err
 		}
 	}
