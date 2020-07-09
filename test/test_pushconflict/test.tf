@@ -6,13 +6,13 @@ provider "gitfile" {
 
 resource "gitfile_checkout" "checkout" {}
 
-resource "gitfile_file" "testfile" {
+resource "gitfile_file" "file1" {
     checkout = gitfile_checkout.checkout.id
     path = "terraform"
     contents = "Terraform making commits"
 }
 
-resource "gitfile_file" "shizz" {
+resource "gitfile_file" "file2" {
     checkout = gitfile_checkout.checkout.id
     path = "myfile"
     contents = "Terraform shizz"
@@ -21,5 +21,5 @@ resource "gitfile_file" "shizz" {
 resource "gitfile_commit" "commit" {
     commit_message = "Created by terraform gitfile_commit"
     # handles = ["${gitfile_file.testfile.id}"]
-    handles = ["${gitfile_file.testfile.id}", "${gitfile_file.shizz.id}"]
+    handles = ["${gitfile_file.file1.id}", "${gitfile_file.file2.id}"]
 }

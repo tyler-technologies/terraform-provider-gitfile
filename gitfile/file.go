@@ -1,6 +1,8 @@
 package gitfile
 
 import (
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -35,22 +37,28 @@ func fileResource() *schema.Resource {
 }
 
 func fileCreateUpdate(d *schema.ResourceData, m interface{}) error {
-	checkout_dir := m.(*GitFileConfig).Path
-	lockCheckout(checkout_dir)
-	defer unlockCheckout(checkout_dir)
+	c := getConfig(m)
+
+	lockCheckout(c.Path)
+	defer unlockCheckout(c.Path)
+	if err := cloneIfNotExist(c); err != nil {
+		return err
+	}
 
 	filepath := d.Get("path").(string)
 	contents := d.Get("contents").(string)
 
-	if err := os.MkdirAll(path.Dir(path.Join(checkout_dir, filepath)), 0755); err != nil {
+	filename := path.Join(c.Path, filepath)
+	if err := os.MkdirAll(path.Dir(filename), 0755); err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(path.Join(checkout_dir, filepath), []byte(contents), 0666); err != nil {
+	if err := ioutil.WriteFile(filename, []byte(contents), 0666); err != nil {
 		return err
 	}
 
-	if _, err := gitCommand(checkout_dir, "add", "--", filepath); err != nil {
-		return err
+	if _, err := gitCommand(c.Path, "add", "--", filepath); err != nil {
+		err_mess := fmt.Sprintf("SORRY BOUTCHA: %s", err.Error())
+		return errors.New(err_mess)
 	}
 
 	hand := handle{
@@ -68,14 +76,19 @@ func fileRead(d *schema.ResourceData, m interface{}) error {
 }
 
 func fileExists(d *schema.ResourceData, m interface{}) (bool, error) {
-	checkout_dir := m.(*GitFileConfig).Path
-	lockCheckout(checkout_dir)
-	defer unlockCheckout(checkout_dir)
+	c := getConfig(m)
+
+	lockCheckout(c.Path)
+	defer unlockCheckout(c.Path)
+
+	if err := cloneIfNotExist(c); err != nil {
+		return false, err
+	}
 	filepath := d.Get("path").(string)
 
-	var out []byte
-	var err error
-	if out, err = ioutil.ReadFile(path.Join(checkout_dir, filepath)); err != nil {
+	out, err := ioutil.ReadFile(path.Join(c.Path, filepath))
+
+	if err != nil {
 		if os.IsNotExist(err) {
 			return false, nil
 		} else {
@@ -90,15 +103,20 @@ func fileExists(d *schema.ResourceData, m interface{}) (bool, error) {
 }
 
 func fileDelete(d *schema.ResourceData, m interface{}) error {
-	checkout_dir := m.(*GitFileConfig).Path
-	lockCheckout(checkout_dir)
-	defer unlockCheckout(checkout_dir)
+	c := getConfig(m)
+
+	lockCheckout(c.Path)
+	defer unlockCheckout(c.Path)
+	if err := cloneIfNotExist(c); err != nil {
+		return err
+	}
+
 	filepath := d.Get("path").(string)
-	file := path.Join(checkout_dir, filepath)
+	file := path.Join(c.Path, filepath)
 	if err := os.Remove(file); err != nil {
 		return err
 	}
-	if _, err := gitCommand(checkout_dir, "rm", "--", filepath); err != nil {
+	if _, err := gitCommand(c.Path, "rm", "--", filepath); err != nil {
 		return err
 	}
 	return nil

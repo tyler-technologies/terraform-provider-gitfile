@@ -1,4 +1,5 @@
 #!/bin/bash
+printf "\nRUNNING TEST_SIMPLE\n"
 set -ex
 rm -rf example.git checkout terraform.tfstate terraform.tfstate.backup
 mkdir example.git

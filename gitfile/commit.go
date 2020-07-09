@@ -2,7 +2,6 @@ package gitfile
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/hashicorp/errwrap"
@@ -108,19 +107,5 @@ func CommitExists(d *schema.ResourceData, m interface{}) (bool, error) {
 
 func CommitDelete(d *schema.ResourceData, m interface{}) error {
 	d.SetId("")
-
-	c := m.(*GitFileConfig)
-
-	checkout_dir := c.Path
-	repo := c.RepoUrl
-	branch := c.Branch
-
-	if _, err := os.Stat(checkout_dir); err != nil {
-		err = clone(checkout_dir, repo, branch)
-		if err != nil {
-			return err
-		}
-	}
-
 	return nil
 }

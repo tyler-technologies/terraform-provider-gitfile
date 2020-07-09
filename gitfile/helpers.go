@@ -2,6 +2,7 @@ package gitfile
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -12,6 +13,27 @@ import (
 	"github.com/hashicorp/terraform/helper/mutexkv"
 )
 
+func getConfig(m interface{}) GitFileConfig {
+	c := m.(*GitFileConfig)
+	res := GitFileConfig{
+		Branch:  c.Branch,
+		Path:    c.Path,
+		RepoUrl: c.RepoUrl,
+	}
+	return res
+}
+
+func cloneIfNotExist(c GitFileConfig) error {
+	if _, err := os.Stat(c.Path); err != nil {
+		err = clone(c.Path, c.RepoUrl, c.Branch)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func clone(dir, repo, branch string) error {
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
@@ -20,6 +42,12 @@ func clone(dir, repo, branch string) error {
 	// May already be checked out from another project
 	if _, err := os.Stat(fmt.Sprintf("%s/.git", dir)); err != nil {
 		if _, err := gitCommand(dir, "clone", "-b", branch, "--", repo, "."); err != nil {
+			cloneExistsError := errwrap.Contains(err, "already exists and is not an empty directory")
+
+			if cloneExistsError {
+				log.Printf("[WARN] git clone failed because the directory already exists: : %s", err.Error())
+				return nil
+			}
 			return err
 		}
 	}

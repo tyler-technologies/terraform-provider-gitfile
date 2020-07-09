@@ -1,6 +1,7 @@
 package gitfile
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -91,78 +92,76 @@ func read(d *schema.ResourceData) error {
 }
 
 func CheckoutCreate(d *schema.ResourceData, m interface{}) error {
-	c := m.(*GitFileConfig)
-	checkout_dir := c.Path
-	repo := c.RepoUrl
-	branch := c.Branch
-
-	err := clone(checkout_dir, repo, branch)
-	if err != nil {
+	c := getConfig(m)
+	lockCheckout(c.Path)
+	defer unlockCheckout(c.Path)
+	if err := cloneIfNotExist(c); err != nil {
 		return err
 	}
-
-	d.SetId(checkout_dir)
+	d.SetId(c.Path)
 	return read(d)
 }
 
 func CheckoutRead(d *schema.ResourceData, m interface{}) error {
-	checkout_dir := d.Id()
-	c := m.(*GitFileConfig)
-	repo := c.RepoUrl
-	branch := c.Branch
+	checkout_id := d.Id()
+	c := getConfig(m)
 
-	if _, err := os.Stat(checkout_dir); err != nil {
-		err = clone(checkout_dir, repo, branch)
-		if err != nil {
-			return err
-		}
+	if c.Path != checkout_id {
+		err_message := fmt.Sprintf("[ERROR] Checkout directory state mismatch. Checkout Directory is: %s. Expected: %s", c.Path, checkout_id)
+		return errors.New(err_message)
 	}
-	lockCheckout(checkout_dir)
-	defer unlockCheckout(checkout_dir)
+
+	lockCheckout(c.Path)
+	defer unlockCheckout(c.Path)
+	if err := cloneIfNotExist(c); err != nil {
+		return err
+	}
+
 	return read(d)
 }
 
 func CheckoutDelete(d *schema.ResourceData, m interface{}) error {
-	checkout_dir := d.Id()
+	checkout_id := d.Id()
 	retry_count := d.Get("retry_count").(int)
 	retry_interval := d.Get("retry_interval").(int)
 
-	c := m.(*GitFileConfig)
-	repo := c.RepoUrl
-	branch := c.Branch
+	var repo string
+	var branch string
 	expected_repo := d.Get("repo").(string)
 	expected_branch := d.Get("branch").(string)
 	expected_head := d.Get("head").(string)
+	c := getConfig(m)
 
-	if _, err := os.Stat(checkout_dir); err != nil {
-		err = clone(checkout_dir, repo, branch)
-		if err != nil {
-			return err
-		}
+	if c.Path != checkout_id {
+		err_message := fmt.Sprintf("[ERROR] Checkout directory state mismatch. Checkout Directory is: %s. Expected: %s", c.Path, checkout_id)
+		return errors.New(err_message)
 	}
 
-	lockCheckout(checkout_dir)
-	defer unlockCheckout(checkout_dir)
+	lockCheckout(c.Path)
+	defer unlockCheckout(c.Path)
+	if err := cloneIfNotExist(c); err != nil {
+		return err
+	}
 
 	// sanity check
 	var head string
 
-	if out, err := gitCommand(checkout_dir, "config", "--get", "remote.origin.url"); err != nil {
+	if out, err := gitCommand(c.Path, "config", "--get", "remote.origin.url"); err != nil {
 		return err
 	} else {
 		repo = strings.TrimRight(string(out), "\n")
 	}
-	if out, err := gitCommand(checkout_dir, "rev-parse", "--abbrev-ref", "HEAD"); err != nil {
+	if out, err := gitCommand(c.Path, "rev-parse", "--abbrev-ref", "HEAD"); err != nil {
 		return err
 	} else {
 		branch = strings.TrimRight(string(out), "\n")
 	}
 
-	if _, err := gitCommand(checkout_dir, "pull", "--ff-only", "origin"); err != nil {
+	if _, err := gitCommand(c.Path, "pull", "--ff-only", "origin"); err != nil {
 		return err
 	}
 
-	if out, err := gitCommand(checkout_dir, "rev-parse", "HEAD"); err != nil {
+	if out, err := gitCommand(c.Path, "rev-parse", "HEAD"); err != nil {
 		return err
 	} else {
 		head = strings.TrimRight(string(out), "\n")
@@ -178,16 +177,16 @@ func CheckoutDelete(d *schema.ResourceData, m interface{}) error {
 		return fmt.Errorf("expected head to be %s, was %s", expected_head, head)
 	}
 
-	if err := commit(checkout_dir, "Removed by Terraform", ""); err != nil {
+	if err := commit(c.Path, "Removed by Terraform", ""); err != nil {
 		return errwrap.Wrapf("push error: {{err}}", err)
 	}
 
-	if err := push(checkout_dir, 0, retry_count, retry_interval); err != nil {
+	if err := push(c.Path, 0, retry_count, retry_interval); err != nil {
 		return err
 	}
 
 	// actually delete
-	if err := os.RemoveAll(checkout_dir); err != nil {
+	if err := os.RemoveAll(c.Path); err != nil {
 		return err
 	}
 
