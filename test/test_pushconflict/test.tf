@@ -23,3 +23,11 @@ resource "gitfile_commit" "commit" {
     # handles = ["${gitfile_file.testfile.id}"]
     handles = ["${gitfile_file.file1.id}", "${gitfile_file.file2.id}"]
 }
+
+output "gitfile_commit_commit_message" {
+    value = gitfile_commit.commit.commit_message
+}
+
+output "gitfile_checkout_path" {
+    value = gitfile_checkout.checkout.path
+}

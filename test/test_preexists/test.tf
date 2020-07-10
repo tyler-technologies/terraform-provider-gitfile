@@ -15,3 +15,11 @@ resource "gitfile_commit" "test" {
     commit_message = "Created by terraform gitfile_commit"
     handles = ["${gitfile_file.test.id}"]
 }
+
+output "gitfile_checkout_path" {
+    value = gitfile_checkout.test.path
+}
+
+output "gitfile_commit_commit_message" {
+    value = gitfile_commit.test.commit_message
+}
