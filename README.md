@@ -64,8 +64,8 @@ This is mostly used to ensure that a checkout is present, before using the _gitf
 resource to commit some Terraform generated data.
 
 Inputs:
-  - retry_count - The number of git commit retries
-  - retry_interval - The number of seconds between git commit retries
+  - retry_count - The number of git checkout retries
+  - retry_interval - The number of seconds between git checkout retries
   
 Outputs:
   - path - The file path on filesystem where the repository has been checked out
