@@ -64,8 +64,9 @@ This is mostly used to ensure that a checkout is present, before using the _gitf
 resource to commit some Terraform generated data.
 
 Inputs:
- 		- retry_count - The number of git commit retries
-		- retry_interval - The number of seconds between git commit retries
+  - retry_count - The number of git commit retries
+  - retry_interval - The number of seconds between git commit retries
+  
 Outputs:
   - path - The file path on filesystem where the repository has been checked out
   - repo - The repository url that was checked out
@@ -82,7 +83,6 @@ Inputs:
   - contents - The contents of the file
 
 Outputs:
-
   - id - The id of the created file. This is usually passed to _gitfile_commit_
 
 ### gitfile_symlink
@@ -90,13 +90,11 @@ Outputs:
 Creates a symlink within a git repository from terraform
 
 Inputs:
-
   - checkout - The ID of the checkout resource the files are associated with
   - path - The path within the checkout to create the symlink at
   - target - The place the symlink should point to. Can be an absolute or relative path
 
 Outputs:
-
   - id - The id of the created symlink. This is usually passed to _gitfile_commit_
 
 ### gitfile_commit
@@ -110,7 +108,7 @@ Terraform will create an empty commit with the specified commit message.
 Inputs:
   - commit_message - The commit message to use for the commit
   - handles - An array of ids from _gitfile_file_ or _gitfile_symlink_ resources which should be included in this commit
-	- retry_count - The number of git commit retries
+  - retry_count - The number of git commit retries
   - retry_interval - The number of seconds between git commit retries
 
 Outputs:
