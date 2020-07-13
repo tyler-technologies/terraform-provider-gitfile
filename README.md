@@ -1,16 +1,17 @@
 <p align="center">
-  <img src="git.png" alt="graphql provider" width="140"/>
+  <img src="git.png" alt="gitfile provider" width="140"/>
 
   <h3 align="center">Terraform Gitfile Provider</h3>
 
   <p align="center">
-    <a href="https://github.com/tyler-technologies/terraform-provider-gitfile/workflows/build/badge.svg"><img alt="Build" src="https://github.com/tyler-technologies/terraform-provider-gitfile/workflows/build/badge.svg"></a>
-    <a href="https://github.com/tyler-technologies/terraform-provider-gitfile/workflows/test/badge.svg"><img alt="Test" src="https://github.com/tyler-technologies/terraform-provider-gitfile/workflows/test/badge.svg"></a>
-    <a href="https://img.shields.io/github/v/release/tyler-technologies/terraform-provider-gitfile"><img alt="Release" src="https://img.shields.io/github/v/release/tyler-technologies/terraform-provider-gitfile"></a>
-    <a href="https://img.shields.io/github/downloads/tyler-technologies/terraform-provider-gitfile/total?color=orange"><img alt="Downloads" src="https://img.shields.io/github/downloads/tyler-technologies/terraform-provider-gitfile/total?color=orange"></a>
-    <a href="https://img.shields.io/github/last-commit/tyler-technologies/terraform-provider-gitfile?color=ff69b4"><img alt="GitHub release" src="https://img.shields.io/github/last-commit/tyler-technologies/terraform-provider-gitfile?color=ff69b4"></a>
+    <a href="https://github.com/tyler-technologies/terraform-provider-gitfile/actions?query=workflow%3Abuild"><img alt="Build" src="https://github.com/tyler-technologies/terraform-provider-gitfile/workflows/build/badge.svg"></a>
+    <a href="https://github.com/tyler-technologies/terraform-provider-gitfile/actions?query=workflow%3Atest"><img alt="Test" src="https://github.com/tyler-technologies/terraform-provider-gitfile/workflows/test/badge.svg"></a>
+    <a href="https://github.com/tyler-technologies/terraform-provider-gitfile/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/tyler-technologies/terraform-provider-gitfile"></a>
+    <a href="https://github.com/tyler-technologies/terraform-provider-gitfile/releases/latest"><img alt="Downloads" src="https://img.shields.io/github/downloads/tyler-technologies/terraform-provider-gitfile/total?color=orange"></a>
+    <a href="https://github.com/tyler-technologies/terraform-provider-gitfile/tree/checkout-tfe-support"><img alt="Latest Commit" src="https://img.shields.io/github/last-commit/tyler-technologies/terraform-provider-gitfile?color=ff69b4"></a>
   </p>
 </p>
+
 ---
 
 ## Synopsis
@@ -24,8 +25,7 @@ or write out hiera data into your puppet configuration.
 
 ## Example:
 ```hcl
-
-   provider "gitfile" {
+  provider "gitfile" {
     repo_url = "https://myverisoncontrolprovider.com/my/repo"
     branch = "master"
     path = "tmp.mycheckoutdestination"
@@ -34,9 +34,9 @@ or write out hiera data into your puppet configuration.
   resource "gitfile_checkout" "test_checkout" {}
 
   resource "gitfile_file" "test_file" {
-      checkout = gitfile_checkout.test_checkout.id
-      path = "terraform"
-      contents = "Terraform making commits"
+    checkout = gitfile_checkout.test_checkout.id
+    path = "terraform"
+    contents = "Terraform making commits"
   }
 
   resource "gitfile_symlink" "test_symlink" {
@@ -46,11 +46,9 @@ or write out hiera data into your puppet configuration.
   }
 
   resource "gitfile_commit" "test_commit" {
-      commit_message = "Created by terraform gitfile_commit"
-      handles = [gitfile_file.test_file.id, gitfile_file.test_symlink.id]
+    commit_message = "Created by terraform gitfile_commit"
+    handles = [gitfile_file.test_file.id, gitfile_file.test_symlink.id]
   }
-
-
 ```
 
 ## Resources
