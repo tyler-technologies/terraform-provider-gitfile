@@ -19,5 +19,10 @@ jobs:
       with:
         go-version: 1.14
 
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: 0.12.28
+
     - name: Run test
       run: make fulltest
