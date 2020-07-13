@@ -8,7 +8,7 @@ help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 fetch: ## download makefile dependencies
-	test -f $(GOPATH)/bin/goreleaser || go get -u -v github.com/goreleaser/goreleaser
+	@hash goreleaser 2>/dev/null || go get -u -v github.com/goreleaser/goreleaser
 
 clean: ## cleans previously built binaries
 	rm -rf ./dist
