@@ -18,6 +18,12 @@ jobs:
       with:
         fetch-depth: 0
 
+    - name: Test
+      uses: benc-uk/workflow-dispatch@v1
+      with:
+        workflow: test
+        token: ${{ secrets.INTEGRATION_TOKEN }}
+
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
@@ -30,7 +36,7 @@ jobs:
         version: latest
         args: release --snapshot --skip-validate --skip-publish
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.INTEGRATION_TOKEN }}
 
     - name: Release
       uses: goreleaser/goreleaser-action@v2.1.1
@@ -39,4 +45,4 @@ jobs:
         version: latest
         args: release --rm-dist
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.INTEGRATION_TOKEN }}
