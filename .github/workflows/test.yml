@@ -36,4 +36,9 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.INTEGRATION_TOKEN }}
 
     - name: Run test
-      run: git config --global user.name "John Doe" && git config --global user.email johndoe@example.com && make test
+      run: make test
+      env:
+        GIT_AUTHOR_NAME: "Name at work"
+        GIT_AUTHOR_EMAIL: "email@work.com"
+        GIT_COMMITTER_NAME: "Name at work"
+        GIT_COMMITTER_EMAIL: "email@work.com"
