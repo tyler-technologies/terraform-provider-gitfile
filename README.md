@@ -4,14 +4,13 @@
   <h3 align="center">Terraform Gitfile Provider</h3>
 
   <p align="center">
-    <a href="![build](https://github.com/tyler-technologies/terraform-provider-gitfile/workflows/build/badge.svg"><img alt="Build" src="![build](https://github.com/tyler-technologies/terraform-provider-gitfile/workflows/build/badge.svg"></a>
+    <a href="![build](https://github.com/tyler-technologies/terraform-provider-gitfile/workflows/build/badge.svg"><img alt="Build" src="https://github.com/tyler-technologies/terraform-provider-gitfile/workflows/build/badge.svg"></a>
     <a href="https://github.com/tyler-technologies/terraform-provider-gitfile/workflows/test/badge.svg"><img alt="Test" src="https://github.com/tyler-technologies/terraform-provider-gitfile/workflows/test/badge.svg"></a>
     <a href="https://img.shields.io/github/v/release/tyler-technologies/terraform-provider-gitfile"><img alt="Release" src="https://img.shields.io/github/v/release/tyler-technologies/terraform-provider-gitfile"></a>
     <a href="https://img.shields.io/github/downloads/tyler-technologies/terraform-provider-gitfile/total?color=orange"><img alt="Downloads" src="https://img.shields.io/github/downloads/tyler-technologies/terraform-provider-gitfile/total?color=orange"></a>
     <a href="https://img.shields.io/github/last-commit/tyler-technologies/terraform-provider-gitfile?color=ff69b4"><img alt="GitHub release" src="https://img.shields.io/github/last-commit/tyler-technologies/terraform-provider-gitfile?color=ff69b4"></a>
   </p>
 </p>
-
 ---
 
 ## Synopsis
