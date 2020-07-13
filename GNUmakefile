@@ -2,7 +2,6 @@ GOPATH := $(shell go env | grep GOPATH | sed 's/GOPATH="\(.*\)"/\1/')
 PATH := $(GOPATH)/bin:$(PATH)
 export $(PATH)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
-COPY_FILES := $(wildcard ./dist/terraform-provider-gitfile*/*)
 TEST_DESTS := $(dir $(wildcard ./test/*/*_test.go))
 
 help:
@@ -35,12 +34,9 @@ build: clean fetch ## publishes in dry run mode
 .PHONY: test copyplugins
 
 copyplugins: ## copy plugins to test folders
+	$(eval COPY_FILES := $(wildcard ./dist/terraform-provider-gitfile*/*))
 	$(eval OS_ARCH := $(patsubst ./dist/terraform-provider-gitfile_%/terraform-provider-gitfile, %, $(COPY_FILES)))
 	$(eval TEST_FOLDERS := $(foreach p,$(OS_ARCH), $(patsubst %,%terraform.d/plugins/$p,$(TEST_DESTS))))
-	@echo $(COPY_FILES)
-	@echo $(OS_ARCH)
-	@echo $(TEST_DESTS)
-	@echo $(TEST_FOLDERS)
 	@sleep 1
 	@mkdir -p $(TEST_FOLDERS)
 	@for o in $(OS_ARCH); do \
