@@ -56,7 +56,7 @@ func GitCommand(checkout_dir string, args ...string) ([]byte, error) {
 	out, err := command.CombinedOutput()
 	if err != nil {
 		log.Fatalf("error running git command: %s, %v", strings.Join(args, " "), err)
-	} else {
-		return out, err
+
 	}
+	return out, err
 }
