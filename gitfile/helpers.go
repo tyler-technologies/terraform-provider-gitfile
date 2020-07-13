@@ -2,7 +2,10 @@ package gitfile
 
 import (
 	"fmt"
+	"log"
+	"os"
 	"os/exec"
+	"path"
 	"strings"
 	"time"
 
@@ -10,6 +13,51 @@ import (
 	"github.com/hashicorp/terraform/helper/hashcode"
 	"github.com/hashicorp/terraform/helper/mutexkv"
 )
+
+func getConfig(m interface{}) GitFileConfig {
+	c := m.(*GitFileConfig)
+	res := GitFileConfig{
+		Branch:  c.Branch,
+		Path:    c.Path,
+		RepoUrl: c.RepoUrl,
+	}
+	return res
+}
+
+func cloneIfNotExist(c GitFileConfig) error {
+	if _, err := os.Stat(c.Path); err != nil {
+		if err = clone(c.Path, c.RepoUrl, c.Branch); err != nil {
+			return err
+		}
+	} else if _, err := os.Stat(path.Join(c.Path, ".git")); err != nil {
+		os.RemoveAll(c.Path)
+		if err = clone(c.Path, c.RepoUrl, c.Branch); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func clone(dir, repo, branch string) error {
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return err
+	}
+
+	// May already be checked out from another project
+	if _, err := os.Stat(fmt.Sprintf("%s/.git", dir)); err != nil {
+		if _, err := gitCommand(dir, "clone", "-b", branch, "--", repo, "."); err != nil {
+			cloneExistsError := errwrap.Contains(err, "already exists and is not an empty directory")
+
+			if cloneExistsError {
+				log.Printf("[WARN] git clone failed because the directory already exists: : %s", err.Error())
+				return nil
+			}
+			return err
+		}
+	}
+	return nil
+}
 
 func gitCommand(checkout_dir string, args ...string) ([]byte, error) {
 	command := exec.Command("git", args...)
@@ -90,33 +138,8 @@ func commit(checkout_dir, commit_message, commit_body string) error {
 	return nil
 }
 
-func stash(checkout_dir string) error {
-	if _, err := gitCommand(checkout_dir, "stash"); err != nil {
-		return err
-	}
-	return nil
-}
-
 func pull(checkout_dir string) error {
 	if _, err := gitCommand(checkout_dir, "pull", "--strategy=ours"); err != nil {
-		return err
-	}
-	return nil
-}
-
-func resetCommit(checkout_dir string) error {
-	if _, err := gitCommand(checkout_dir, "reset", "--soft", "HEAD~1"); err != nil {
-		return err
-	}
-	return nil
-}
-
-func applyStash(checkout_dir string) error {
-	if _, err := gitCommand(checkout_dir, "stash", "show", "stash@{0}"); err != nil {
-		return nil
-	}
-
-	if _, err := gitCommand(checkout_dir, "checkout", "stash", "--", "."); err != nil {
 		return err
 	}
 	return nil
