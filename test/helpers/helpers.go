@@ -3,6 +3,7 @@ package helpers
 import (
 	"errors"
 	"fmt"
+	"log"
 	"os/exec"
 	"strings"
 	"testing"
@@ -54,7 +55,7 @@ func GitCommand(checkout_dir string, args ...string) ([]byte, error) {
 	command.Dir = checkout_dir
 	out, err := command.CombinedOutput()
 	if err != nil {
-		return out, errors.New(fmt.Sprintf("Error while running git %s: %v\nWorking dir: %s\nOutput: %s", strings.Join(args, " "), err, checkout_dir, string(out)))
+		log.Fatalf("error running git command: %s, %v", strings.Join(args, " "), err)
 	} else {
 		return out, err
 	}
