@@ -52,11 +52,15 @@ func commitResource() *schema.Resource {
 }
 
 func CommitCreate(d *schema.ResourceData, m interface{}) error {
+	c := getConfig(m)
 	checkout_dir := m.(*GitFileConfig).Path
 	retry_count := d.Get("retry_count").(int)
 	retry_interval := d.Get("retry_interval").(int)
 	lockCheckout(checkout_dir)
 	defer unlockCheckout(checkout_dir)
+	if err := cloneIfNotExist(c); err != nil {
+		return err
+	}
 
 	handles := d.Get("handles").(*schema.Set)
 	filepaths := []string{}
