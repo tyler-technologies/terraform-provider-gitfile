@@ -34,15 +34,13 @@ build: clean fetch ## publishes in dry run mode
 .PHONY: test copyplugins
 
 copyplugins: ## copy plugins to test folders
-	$(eval OS_DIRS := $(wildcard ./dist/terraform-provider-gitfile*/))
+	$(eval OS_DIRS := $(dir $(wildcard ./dist/terraform-provider-gitfile*/*)))
 	$(eval OS_ARCH := $(patsubst ./dist/terraform-provider-gitfile_%/, %, $(OS_DIRS)))
 	@sleep 1
 	@for f in $(TEST_DESTS); do \
 		for o in $(OS_ARCH); do \
-		  if echo $$o | grep -v ".gz"; then \
-		  	mkdir -p $$f/terraform.d/plugins/$$o; \
-				cp ./dist/terraform-provider-gitfile_$$o/* $$f/terraform.d/plugins/$$o; \
-			fi; \
+	  	mkdir -p $$f/terraform.d/plugins/$$o; \
+			cp ./dist/terraform-provider-gitfile_$$o/* $$f/terraform.d/plugins/$$o; \
 		done; \
 	done
 
