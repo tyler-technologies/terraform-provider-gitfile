@@ -37,10 +37,9 @@ copyplugins: ## copy plugins to test folders
 	$(eval OS_DIRS := $(wildcard ./dist/terraform-provider-gitfile*/))
 	$(eval OS_ARCH := $(patsubst ./dist/terraform-provider-gitfile_%/, %, $(OS_DIRS)))
 	@sleep 1
-	@ls -la ./dist
 	@for f in $(TEST_DESTS); do \
 		for o in $(OS_ARCH); do \
-		  if [[ ! $$o =~ ".gz" ]]; then \
+		  if echo $$o | grep -v ".gz"; then \
 		  	echo "dest = "$$f; \
 				echo "os = "$$o; \
 		  	mkdir -p $$f/terraform.d/plugins/$$o; \
