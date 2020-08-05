@@ -40,8 +40,6 @@ copyplugins: ## copy plugins to test folders
 	@for f in $(TEST_DESTS); do \
 		for o in $(OS_ARCH); do \
 		  if echo $$o | grep -v ".gz"; then \
-		  	echo "dest = "$$f; \
-				echo "os = "$$o; \
 		  	mkdir -p $$f/terraform.d/plugins/$$o; \
 				cp ./dist/terraform-provider-gitfile_$$o/* $$f/terraform.d/plugins/$$o; \
 			fi; \
