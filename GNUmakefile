@@ -28,19 +28,18 @@ publish: clean fetch ## publishes assets
 	$(GOPATH)/bin/goreleaser
 
 build: clean fetch ## publishes in dry run mode
-	$(GOPATH)/bin/goreleaser --skip-publish --snapshot
+	$(GOPATH)/bin/goreleaser release --snapshot --skip-validate --skip-publish
 
 
 .PHONY: test copyplugins
 
 copyplugins: ## copy plugins to test folders
-	$(eval COPY_FILES := $(wildcard ./dist/terraform-provider-gitfile*/*))
-	$(eval OS_ARCH := $(patsubst ./dist/terraform-provider-gitfile_%/terraform-provider-gitfile, %, $(COPY_FILES)))
-	$(eval TEST_FOLDERS := $(foreach p,$(OS_ARCH), $(patsubst %,%terraform.d/plugins/$p,$(TEST_DESTS))))
+	$(eval OS_DIRS := $(dir $(wildcard ./dist/terraform-provider-gitfile*/*)))
+	$(eval OS_ARCH := $(patsubst ./dist/terraform-provider-gitfile_%/, %, $(OS_DIRS)))
 	@sleep 1
-	@mkdir -p $(TEST_FOLDERS)
-	@for o in $(OS_ARCH); do \
-		for f in $(TEST_DESTS); do \
+	@for f in $(TEST_DESTS); do \
+		for o in $(OS_ARCH); do \
+	  	mkdir -p $$f/terraform.d/plugins/$$o; \
 			cp ./dist/terraform-provider-gitfile_$$o/* $$f/terraform.d/plugins/$$o; \
 		done; \
 	done

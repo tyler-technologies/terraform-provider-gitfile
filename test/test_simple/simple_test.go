@@ -28,6 +28,7 @@ func TestSimple(t *testing.T) {
 	o := &helpers.TerratestDefaultOptions
 	terraform.Init(t, o)
 	helpers.GeneratePlan(t, o, "plan.out")
+	defer os.RemoveAll("plan.out")
 	helpers.ApplyWithPlanFile(t, o, "plan.out")
 	// terraform.InitAndApply(t, o)
 	expected_commit_msg := "Created by terraform gitfile_commit"
