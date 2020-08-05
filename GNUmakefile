@@ -35,12 +35,13 @@ build: clean fetch ## publishes in dry run mode
 
 copyplugins: ## copy plugins to test folders
 	$(eval COPY_FILES := $(wildcard ./dist/terraform-provider-gitfile*/*))
-	$(eval OS_ARCH := $(patsubst ./dist/terraform-provider-gitfile_%/terraform-provider-gitfile, %, $(COPY_FILES)))
+	$(eval OS_DIRS := $(wildcard ./dist/terraform-provider-gitfile*/))
+	$(eval OS_ARCH := $(patsubst ./dist/terraform-provider-gitfile_%/, %, $(OS_DIRS)))
 	$(eval TEST_FOLDERS := $(foreach p,$(OS_ARCH), $(patsubst %,%terraform.d/plugins/$p,$(TEST_DESTS))))
 	@sleep 1
 	@mkdir -p $(TEST_FOLDERS)
-	@for o in $(OS_ARCH); do \
-		for f in $(TEST_DESTS); do \
+	@for f in $(TEST_DESTS); do \
+		for o in $(OS_ARCH); do \
 			cp ./dist/terraform-provider-gitfile_$$o/* $$f/terraform.d/plugins/$$o; \
 		done; \
 	done

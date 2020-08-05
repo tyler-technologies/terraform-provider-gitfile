@@ -57,6 +57,7 @@ func TestPushConflict(t *testing.T) {
 	o := &helpers.TerratestDefaultOptions
 	terraform.Init(t, o)
 	helpers.GeneratePlan(t, o, "plan.out")
+	defer os.RemoveAll("plan.out")
 
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -91,6 +92,7 @@ func TestPushConflict(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	helpers.GenerateDestroyPlan(t, o, "destroy.out")
+	defer os.RemoveAll("destroy.out")
 	helpers.ApplyWithPlanFile(t, o, "destroy.out")
 
 	assert.NoDirExists(t, "checkout", "checkout dir should be deleted on destroy")
