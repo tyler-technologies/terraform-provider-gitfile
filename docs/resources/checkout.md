@@ -1,6 +1,5 @@
 # <resource name> gitfile_checkout
 
-
 Checks out a git repository onto your local filesystem from within a terraform provider.
 
 This is mostly used to ensure that a checkout is present, before using the _gitfile_commit_
