@@ -34,7 +34,7 @@ build: clean fetch ## publishes in dry run mode
 .PHONY: test copyplugins
 
 copyplugins: ## copy plugins to test folders
-	$(eval OS_DIRS := $(dir $(wildcard ./dist/terraform-provider-gitfile*/)))
+	$(eval OS_DIRS := $(dir $(wildcard ./dist/terraform-provider-gitfile*/*)))
 	$(eval OS_ARCH := $(patsubst ./dist/terraform-provider-gitfile_%/, %, $(OS_DIRS)))
 	@sleep 1
 	@for f in $(TEST_DESTS); do \
