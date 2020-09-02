@@ -28,7 +28,7 @@ publish: clean fetch ## publishes assets
 	$(GOPATH)/bin/goreleaser
 
 build: clean fetch ## publishes in dry run mode
-	$(GOPATH)/bin/goreleaser release --snapshot --skip-validate --skip-publish
+	$(GOPATH)/bin/goreleaser release --snapshot --skip-validate --skip-publish --skip-sign
 
 
 .PHONY: test copyplugins
